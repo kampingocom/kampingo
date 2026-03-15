@@ -1,0 +1,2613 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kampingo - Keşfet, planla, yola çık.</title>
+    <meta name="description" content="Kampingo, doğa severlerin buluşma noktasıdır. Türkiye'nin en güzel kamp alanlarını keşfet, planla, yola çık.">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Markdown Parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- HTML to PDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            dark: '#0f1f1a', // Çok koyu orman
+                            primary: '#059669', // Ana yeşil
+                            accent: '#f59e0b', // Turuncu/Sarı (Kamp ateşi)
+                            surface: '#132a24', // Kart arka planı
+                            light: '#ecfdf5',
+                        }
+                    },
+                    animation: {
+                        'float': 'float 4s ease-in-out infinite',
+                        'float-bubble': 'float-bubble 3s ease-in-out infinite',
+                        'bounce-slow': 'bounce 3s infinite',
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0) rotate(0deg)' },
+                            '50%': { transform: 'translateY(-15px) rotate(2deg)' },
+                        },
+                        'float-bubble': {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        fadeIn: {
+                            'from': { opacity: 0, transform: 'translateY(10px)' },
+                            'to': { opacity: 1, transform: 'translateY(0)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #050b09;
+            background-image: radial-gradient(circle at 50% 0%, #163e32 0%, #050b09 70%);
+            color: #ecfdf5;
+            min-height: 100vh;
+        }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .glass-panel {
+            background: rgba(19, 42, 36, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(5, 150, 105, 0.2);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+            border-color: rgba(5, 150, 105, 0.5);
+        }
+
+        /* Stronger Placeholder Animation */
+        @keyframes placeholderBlink {
+            0%, 100% { opacity: 1; color: #9ca3af; }
+            50% { opacity: 0.3; color: #6b7280; }
+        }
+        .animate-placeholder::placeholder {
+            animation: placeholderBlink 2s ease-in-out infinite;
+            color: #9ca3af;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f1f1a; }
+        ::-webkit-scrollbar-thumb { background: #059669; border-radius: 4px; }
+
+        /* Custom Scrollbar Light (Drop menüler için) */
+        .custom-scrollbar-light::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar-light::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+        .custom-scrollbar-light::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+        .custom-scrollbar-light::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Mascot Animation */
+        .mascot-wrapper { animation: float 4s ease-in-out infinite; }
+
+        /* Custom Checkbox */
+        .cb-container {
+            display: block;
+            position: relative;
+            padding-left: 35px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            font-size: 15px;
+            user-select: none;
+        }
+        .cb-container input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+        .checkmark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 22px;
+            width: 22px;
+            background-color: #132a24;
+            border: 2px solid #059669;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        .cb-container:hover input ~ .checkmark {
+            background-color: rgba(5, 150, 105, 0.2);
+        }
+        .cb-container input:checked ~ .checkmark {
+            background-color: #059669;
+            border-color: #059669;
+        }
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+        }
+        .cb-container input:checked ~ .checkmark:after {
+            display: block;
+        }
+        .cb-container .checkmark:after {
+            left: 7px;
+            top: 3px;
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        /* PDF Export İçin Özel Açık (Beyaz) Tema ve Koyu Kartlar */
+        .pdf-light-theme {
+            background-color: #ffffff !important;
+            border-color: #ffffff !important;
+        }
+        .pdf-light-theme * {
+            box-shadow: none !important;
+            /* Hızlandırma: html2canvas'ı yoran filtre ve geçişler kapatıldı */
+            transition: none !important;
+            backdrop-filter: none !important;
+            animation: none !important;
+        }
+        
+        .pdf-light-theme .line-through {
+            text-decoration: none !important;
+        }
+
+        .pdf-light-theme .bg-brand-surface {
+            background-color: #132a24 !important;
+            border-color: rgba(5, 150, 105, 0.4) !important;
+        }
+
+        .pdf-light-theme #pdfHeader h1 {
+            color: #059669 !important;
+        }
+        .pdf-light-theme #pdfHeader p {
+            color: #4b5563 !important;
+        }
+        .pdf-light-theme #pdfFooter p {
+            color: #6b7280 !important;
+        }
+
+        /* Blog Article Readability & SEO Formatting */
+        .article-content h2 {
+            color: #ffffff;
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        .article-content h3 {
+            color: #ecfdf5;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .article-content p {
+            color: #d1d5db;
+            margin-bottom: 1.25rem;
+            line-height: 1.8;
+        }
+        .article-content ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .article-content li {
+            color: #d1d5db;
+            line-height: 1.6;
+            background: rgba(19, 42, 36, 0.4);
+            padding: 16px 20px;
+            border-radius: 12px;
+        }
+        .article-content li strong {
+            color: #f59e0b;
+            font-size: 1.05rem;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        @media print {
+            body { background: white !important; color: black !important; }
+            .no-print { display: none !important; }
+            .print-text-black { color: #000 !important; }
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-brand-accent selection:text-brand-dark">
+
+    <nav class="fixed w-full z-50 glass-panel border-b-0 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-row items-center justify-between h-20">
+                <div class="flex items-center gap-2 md:gap-3 cursor-pointer" onclick="showHome(); window.scrollTo(0,0)">
+                    <div class="rotate-3 hover:rotate-0 transition-transform">
+                        <img src="https://i.hizliresim.com/eyadqte.png" alt="Kampingo Logo" class="h-8 w-8 md:h-10 md:w-10 object-contain drop-shadow-lg">
+                    </div>
+                    <span class="font-extrabold text-xl md:text-2xl tracking-tight text-white">Kampingo<span class="text-brand-accent">.</span></span>
+                </div>
+                
+                <div class="hidden md:flex items-center gap-6 lg:gap-8">
+                    <a href="#" onclick="showBlog(); return false;" class="text-sm lg:text-base font-bold text-gray-300 hover:text-brand-accent transition flex items-center gap-1.5 uppercase tracking-wide">
+                        <i data-lucide="book-open" class="w-4 h-4 md:w-5 md:h-5"></i> <span>Blog</span>
+                    </a>
+                    <a href="#" onclick="showChecklist(); return false;" class="text-sm lg:text-base font-bold text-gray-300 hover:text-brand-accent transition flex items-center gap-1.5 uppercase tracking-wide">
+                        <i data-lucide="list-checks" class="w-4 h-4 md:w-5 md:h-5"></i> <span>Malzeme Listesi</span>
+                    </a>
+                    <a href="#" onclick="showMarket(); return false;" class="text-sm lg:text-base font-bold text-brand-primary hover:text-brand-accent transition flex items-center gap-1.5 uppercase tracking-wide">
+                        <i data-lucide="shopping-cart" class="w-4 h-4 md:w-5 md:h-5"></i> <span>Kamp Market</span>
+                    </a>
+                    <a href="#" onclick="showBungalows(); return false;" class="text-sm lg:text-base font-black text-[#d18c10] hover:text-brand-accent transition flex items-center gap-1.5 uppercase tracking-wide">
+                        <i data-lucide="tent" class="w-4 h-4 md:w-5 md:h-5"></i> <span>Bungalov</span>
+                    </a>
+                    <a href="#" onclick="showContact(); return false;" class="text-sm lg:text-base font-bold text-gray-300 hover:text-brand-accent transition flex items-center gap-1.5 uppercase tracking-wide">
+                        <i data-lucide="mail" class="w-4 h-4 md:w-5 md:h-5"></i> <span>İletişim</span>
+                    </a>
+                </div>
+
+                <button onclick="toggleMobileMenu()" class="md:hidden text-brand-dark hover:text-brand-primary transition bg-white border border-white hover:bg-gray-100 px-3 py-2 rounded-xl flex items-center gap-2 focus:outline-none shadow-[0_0_15px_rgba(255,255,255,0.15)]">
+                    <span id="mobileMenuText" class="text-xs font-extrabold tracking-widest uppercase">Menü</span>
+                    <i data-lucide="menu" id="mobileMenuIcon" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="mobileMenu" class="hidden md:hidden absolute top-24 right-4 w-56 bg-white/95 backdrop-blur-xl border border-gray-200/50 rounded-2xl flex-col p-2 shadow-2xl transition-all origin-top-right z-50">
+            <a href="#" onclick="showHome(); return false;" class="flex items-center gap-3 text-brand-dark font-bold text-sm p-3.5 rounded-xl hover:bg-gray-100/80 hover:text-brand-primary transition uppercase tracking-wide">
+                <i data-lucide="home" class="w-5 h-5"></i> Ana Sayfa
+            </a>
+            <a href="#" onclick="showBlog(); return false;" class="flex items-center gap-3 text-brand-dark font-bold text-sm p-3.5 rounded-xl hover:bg-gray-100/80 hover:text-brand-primary transition uppercase tracking-wide">
+                <i data-lucide="book-open" class="w-5 h-5"></i> Blog
+            </a>
+            <a href="#" onclick="showChecklist(); return false;" class="flex items-center gap-3 text-brand-dark font-bold text-sm p-3.5 rounded-xl hover:bg-gray-100/80 hover:text-brand-primary transition uppercase tracking-wide">
+                <i data-lucide="list-checks" class="w-5 h-5"></i> Malzeme Listesi
+            </a>
+            <a href="#" onclick="showMarket(); return false;" class="flex items-center gap-3 text-brand-primary font-bold text-sm p-3.5 rounded-xl hover:bg-emerald-50/80 transition uppercase tracking-wide">
+                <i data-lucide="shopping-cart" class="w-5 h-5"></i> Kamp Market
+            </a>
+            <a href="#" onclick="showBungalows(); return false;" class="flex items-center gap-3 text-[#d18c10] font-black text-sm p-3.5 rounded-xl hover:bg-yellow-50/80 transition uppercase tracking-wide">
+                <i data-lucide="tent" class="w-5 h-5"></i> Bungalov
+            </a>
+            <a href="#" onclick="showContact(); return false;" class="flex items-center gap-3 text-brand-dark font-bold text-sm p-3.5 rounded-xl hover:bg-gray-100/80 hover:text-brand-primary transition uppercase tracking-wide">
+                <i data-lucide="mail" class="w-5 h-5"></i> İletişim
+            </a>
+        </div>
+    </nav>
+
+    <!-- HEADER ALTI REKLAM ALANI (Tüm sayfalarda üstte görünür) -->
+    <!-- Üst ve alt boşluklar mobilde daraltıldı (pt-24 pb-4), masaüstünde geniş bırakıldı (md:pt-28 md:pb-8) -->
+    <div id="globalHeaderAd" class="w-full max-w-7xl mx-auto px-4 pt-24 pb-4 md:pt-28 md:pb-8 flex flex-col items-center justify-center no-print">
+        <!-- rounded-2xl class'ı kaldırılarak kenarlar düzleştirildi -->
+        <a href="#" onclick="showChecklist(); return false;" class="block w-full max-w-[970px] overflow-hidden shadow-2xl border border-gray-800/50">
+            <!-- Masaüstü Görünüm Banner'ı -->
+            <img src="http://kampingo.com/images/assets/reklam-alani-970x250px.webp" alt="Kamp Malzeme Listenizi Yaptınız mı?" class="hidden md:block w-full object-cover">
+            <!-- Mobil Görünüm Banner'ı -->
+            <img src="http://kampingo.com/images/assets/reklam-alani-970x250px.webp" alt="Kamp Malzeme Listenizi Yaptınız mı?" class="block md:hidden w-full object-cover">
+        </a>
+    </div>
+
+    <!-- Hero section paddingi mobilde pt-20'ye ayarlandı. -->
+    <header id="heroSection" class="relative pt-20 md:pt-12 pb-16 px-4 no-print">
+        <div class="max-w-4xl mx-auto text-center">
+            <div class="relative z-10">
+                <div id="heroMascot" class="mb-8 flex justify-center mascot-wrapper group">
+                    <div class="relative">
+                        <!-- Mobil görünümde baloncuk şapka hizasına (-top-12) çekildi -->
+                        <div class="absolute -top-12 left-[55%] transform -translate-x-1/2 md:translate-x-0 md:left-auto md:-top-12 md:-right-20 bg-white text-brand-dark p-4 rounded-2xl rounded-bl-none shadow-xl md:rotate-6 z-20 min-w-[140px] border-2 border-brand-primary animate-float-bubble">
+                            <p class="text-sm md:text-base font-bold text-center leading-relaxed whitespace-nowrap">
+                                <i data-lucide="bird" class="inline w-5 h-5 text-brand-primary align-text-bottom mr-1 mb-0.5"></i>"Cik cik!<br>
+                                Hadi kampa gidelim!"
+                            </p>
+                        </div>
+                        <img src="https://resmim.net/cdn/2026/01/06/wbBzSx.png" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/3069/3069172.png';" alt="Kampingo Maskot" class="h-64 md:h-72 w-auto object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-300 cursor-pointer">
+                    </div>
+                </div>
+
+                <div id="heroBadge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-accent/10 border border-brand-accent/20 text-brand-accent text-sm font-bold mb-6">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-accent opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-brand-accent"></span>
+                    </span>
+                    Türkiye'nin Seçkin Kamp Rotaları
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-4 text-white leading-tight">
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-yellow-300">Kampingo</span> ile Türkiye'nin en iyi<br>kamp rotalarını keşfet.
+                </h1>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+        
+        <div id="filtersSection" class="relative z-30 w-full max-w-4xl mx-auto -mt-10 mb-12 no-print transition-all duration-500">
+            <div class="bg-[#f8fafc] p-3 md:p-3.5 rounded-[20px] shadow-[0_15px_40px_rgba(0,0,0,0.5)] flex flex-col lg:flex-row gap-3 items-center border border-slate-300">
+                
+                <div class="relative w-full flex-1 dropdown-wrapper group">
+                    <div onclick="toggleDropdown('region')" class="flex items-center justify-between bg-white border border-slate-300 hover:border-emerald-500 rounded-[14px] p-3 md:p-4 cursor-pointer transition-colors w-full h-[64px]">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="map" class="text-[#2E8B57] w-[32px] h-[32px] shrink-0"></i>
+                            <div class="flex flex-col items-start justify-center">
+                                <span class="text-gray-500 text-[12px] font-semibold leading-none mb-1">BÖLGE</span>
+                                <span id="text-region" class="text-gray-900 font-extrabold text-[14px] md:text-[15px] leading-none whitespace-nowrap">Tümü</span>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-down" class="text-gray-600 w-[18px] h-[18px] ml-1 transition-transform duration-300 group-hover:text-emerald-600 shrink-0"></i>
+                    </div>
+                    <div id="menu-region" class="dropdown-menu hidden absolute top-full left-0 w-full mt-2 bg-white border border-slate-300 rounded-[16px] shadow-2xl z-50 overflow-hidden py-2 max-h-64 overflow-y-auto custom-scrollbar-light">
+                    </div>
+                </div>
+
+                <div class="relative w-full flex-1 dropdown-wrapper group">
+                    <div onclick="toggleDropdown('vibe')" class="flex items-center justify-between bg-white border border-slate-300 hover:border-emerald-500 rounded-[14px] p-3 md:p-4 cursor-pointer transition-colors w-full h-[64px]">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="tent" class="text-[#2E8B57] w-[32px] h-[32px] shrink-0"></i>
+                            <div class="flex flex-col items-start justify-center">
+                                <span class="text-gray-500 text-[12px] font-semibold leading-none mb-1">KAMP ALANI</span>
+                                <span id="text-vibe" class="text-gray-900 font-extrabold text-[14px] md:text-[15px] leading-none whitespace-nowrap">Tümü</span>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-down" class="text-gray-600 w-[18px] h-[18px] ml-1 transition-transform duration-300 group-hover:text-emerald-600 shrink-0"></i>
+                    </div>
+                    <div id="menu-vibe" class="dropdown-menu hidden absolute top-full left-0 w-full mt-2 bg-white border border-slate-300 rounded-[16px] shadow-2xl z-50 overflow-hidden py-2 max-h-64 overflow-y-auto custom-scrollbar-light">
+                    </div>
+                </div>
+
+                <div class="relative w-full flex-1 dropdown-wrapper group">
+                    <div onclick="toggleDropdown('facility')" class="flex items-center justify-between bg-white border border-slate-300 hover:border-emerald-500 rounded-[14px] p-3 md:p-4 cursor-pointer transition-colors w-full h-[64px]">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="layout-list" class="text-[#2E8B57] w-[32px] h-[32px] shrink-0"></i>
+                            <div class="flex flex-col items-start justify-center">
+                                <span class="text-gray-500 text-[12px] font-semibold leading-none mb-1">OLANAKLAR</span>
+                                <span id="text-facility" class="text-gray-900 font-extrabold text-[14px] md:text-[15px] leading-none whitespace-nowrap">Tümü</span>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-down" class="text-gray-600 w-[18px] h-[18px] ml-1 transition-transform duration-300 group-hover:text-emerald-600 shrink-0"></i>
+                    </div>
+                    <div id="menu-facility" class="dropdown-menu hidden absolute top-full left-0 w-full mt-2 bg-white border border-slate-300 rounded-[16px] shadow-2xl z-50 overflow-hidden max-h-64 overflow-y-auto custom-scrollbar-light py-2">
+                    </div>
+                </div>
+
+                <button onclick="applyFilters()" class="w-full lg:w-auto h-[64px] bg-[#2E8B57] hover:bg-[#236b43] text-white font-extrabold text-[15px] lg:text-base xl:text-lg px-6 xl:px-8 rounded-[14px] transition-all shadow-lg hover:shadow-emerald-700/40 flex items-center justify-center shrink-0 whitespace-nowrap">
+                    Kamp Alanı Ara
+                </button>
+            </div>
+        </div>
+
+        <!-- Tüm sekmelerin alt padding (pb) değeri 0 yapıldı, mesafeyi sadece <main> yönetecek -->
+        <div id="campDetailSection" class="hidden animate-fade-in pt-0 pb-0 w-full no-print">
+            <button onclick="showHome()" class="mb-5 text-brand-accent hover:text-white font-bold transition-colors flex items-center gap-2 group bg-brand-surface px-4 py-2 rounded-xl border border-gray-800 w-max">
+                <i data-lucide="arrow-left" class="w-5 h-5 group-hover:-translate-x-1 transition-transform"></i> Rotalara Dön
+            </button>
+            
+            <div class="mb-5">
+                <h1 id="detailTitle" class="text-3xl md:text-5xl font-extrabold text-white mb-3"></h1>
+                <p id="detailShortDesc" class="text-gray-300 text-lg w-full leading-relaxed"></p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <div class="lg:col-span-2 space-y-5">
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+                        <section class="bg-brand-surface border border-gray-800 p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-lg md:col-span-1">
+                            <h3 class="text-sm sm:text-base font-bold text-white mb-2 sm:mb-3 border-b border-gray-700 pb-2">Bölge</h3>
+                            <div id="detailRegionSidebar" class="flex flex-col gap-2"></div>
+                        </section>
+
+                        <section class="bg-brand-surface border border-gray-800 p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-lg md:col-span-2">
+                            <h3 class="text-sm sm:text-base font-bold text-white mb-2 sm:mb-3 border-b border-gray-700 pb-2">Kamp Alanı</h3>
+                            <div id="detailVibesSidebar" class="flex flex-wrap gap-2"></div>
+                        </section>
+                    </div>
+
+                    <div class="flex flex-col gap-3 sm:gap-4 mb-8">
+                        <div class="relative w-full h-56 sm:h-72 md:h-[24rem] lg:h-[28rem] rounded-3xl overflow-hidden group border border-gray-800 shadow-2xl bg-brand-surface">
+                            <img id="detailMainImage" src="" alt="Kamp Görseli" class="w-full h-full object-cover transition-opacity duration-300">
+                            <div class="absolute inset-0 bg-gradient-to-t from-brand-dark/80 via-transparent to-transparent pointer-events-none"></div>
+                            
+                            <div id="detailCity" class="absolute top-4 left-4 bg-black/70 backdrop-blur text-white text-xs md:text-sm font-bold px-4 py-2 rounded-xl border border-white/20 shadow-lg flex items-center gap-1.5 z-10"></div>
+                        
+                        <div id="detailRating" class="absolute top-4 right-4 bg-[#FFD700] text-black text-xs sm:text-sm font-extrabold px-3 py-1.5 rounded-lg shadow-lg flex items-center gap-1 z-10"></div>
+
+                        <button onclick="slideDetailMain(-1)" class="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white p-2 sm:p-3 rounded-full backdrop-blur transition-all z-10 shadow-lg">
+                            <i data-lucide="chevron-left" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                        </button>
+                        <button onclick="slideDetailMain(1)" class="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white p-2 sm:p-3 rounded-full backdrop-blur transition-all z-10 shadow-lg">
+                            <i data-lucide="chevron-right" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="detailThumbnails" class="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory px-1">
+                        </div>
+                </div>
+
+                    <div id="detailLongDesc" class="text-gray-300 leading-relaxed text-[17px] space-y-5"></div>
+
+                    <!-- KAMP DETAY İÇERİK REKLAM ALANI -->
+                    <div class="w-full flex flex-col items-start justify-start py-4 no-print">
+                        <!-- Desktop (336x280) - Yuvarlak köşeler kaldırıldı -->
+                        <div class="hidden md:flex w-[336px] h-[280px] bg-brand-dark/80 border border-dashed border-gray-700 hover:border-brand-primary/50 flex-col items-center justify-center text-gray-500 shadow-inner relative overflow-hidden p-6 text-center transition-colors">
+                            <i data-lucide="monitor-play" class="w-8 h-8 mb-2 opacity-50"></i>
+                            <span class="font-extrabold tracking-widest text-xs text-gray-400 mb-1">İÇERİK REKLAMI</span>
+                            <span class="text-[10px] mt-1 opacity-50">336 x 280 (Large Rectangle)</span>
+                        </div>
+                        <!-- Mobile (300x250) - Yuvarlak köşeler kaldırıldı -->
+                        <div class="flex md:hidden w-[300px] h-[250px] bg-brand-dark/80 border border-dashed border-gray-700 hover:border-brand-primary/50 flex-col items-center justify-center text-gray-500 shadow-inner relative overflow-hidden p-4 text-center transition-colors">
+                            <i data-lucide="smartphone" class="w-6 h-6 mb-1.5 opacity-50"></i>
+                            <span class="font-extrabold tracking-widest text-[10px] text-gray-400">İÇERİK REKLAMI</span>
+                            <span class="text-[9px] mt-0.5 opacity-50">300 x 250 (Medium Rectangle)</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                        <section class="bg-brand-surface border border-gray-800 p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-lg">
+                            <h3 class="text-sm sm:text-base font-bold text-white mb-2 sm:mb-3 border-b border-gray-700 pb-2">Olanaklar</h3>
+                            <div id="detailFacilities" class="grid grid-cols-1 lg:grid-cols-2 gap-2"></div>
+                        </section>
+
+                        <section class="bg-brand-surface border border-gray-800 p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-lg">
+                            <h3 class="text-sm sm:text-base font-bold text-white mb-2 sm:mb-3 border-b border-gray-700 pb-2">İhtiyaç Noktaları</h3>
+                            <div id="detailNeeds" class="grid grid-cols-1 lg:grid-cols-2 gap-2"></div>
+                        </section>
+                    </div>
+
+                    <section>
+                        <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="map" class="text-brand-accent"></i> Konum</h2>
+                        <div id="detailMap" class="w-full h-72 md:h-[400px] rounded-2xl overflow-hidden border border-gray-800 shadow-lg bg-brand-surface mb-8"></div>
+                        
+                        <div class="bg-brand-surface border border-gray-800 p-6 md:p-8 rounded-3xl shadow-lg mt-6">
+                            <p class="text-white font-bold text-lg mb-5 flex items-center gap-2">
+                                <i data-lucide="share-2" class="w-5 h-5 text-brand-accent"></i> Rotayı Arkadaşlarınla Paylaş:
+                            </p>
+                            <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 w-full">
+                                <button onclick="copyDetailLink()" class="flex-1 w-full bg-brand-primary/10 hover:bg-brand-primary text-brand-primary hover:text-white border border-brand-primary/30 px-2 py-3 rounded-xl text-[13px] font-extrabold transition-all flex items-center justify-center gap-1.5 group">
+                                    <i data-lucide="link" class="w-4 h-4 group-hover:scale-110 transition-transform"></i> Kopyala
+                                </button>
+                                <button onclick="shareOnWhatsApp()" class="flex-1 w-full bg-[#25D366]/10 hover:bg-[#25D366] text-[#25D366] hover:text-white border border-[#25D366]/30 px-2 py-3 rounded-xl text-[13px] font-extrabold transition-all flex items-center justify-center gap-1.5 group">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="w-4 h-4 fill-current group-hover:scale-110 transition-transform"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157.1zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7 .9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg> WhatsApp
+                                </button>
+                                <button onclick="shareOnTelegram()" class="flex-1 w-full bg-[#0088cc]/10 hover:bg-[#0088cc] text-[#0088cc] hover:text-white border border-[#0088cc]/30 px-2 py-3 rounded-xl text-[13px] font-extrabold transition-all flex items-center justify-center gap-1.5 group">
+                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512" class="w-4 h-4 fill-current group-hover:scale-110 transition-transform"><path d="M248 8C111 8 0 119 0 256S111 504 248 504 496 393 496 256 385 8 248 8zM363 176.7c-3.7 39.2-19.9 134.4-28.1 178.3-3.5 18.6-10.3 24.8-16.9 25.4-14.4 1.3-25.3-9.5-39.3-18.7-21.8-14.3-34.2-23.2-55.3-37.2-24.5-16.1-8.6-25 5.3-39.5 3.7-3.8 67.1-61.5 68.3-66.7 .2-.7 .3-3.1-1.2-4.4s-3.6-.8-5.1-.5q-3.3 .7-104.6 69.1-14.8 10.2-26.9 9.9c-8.9-.2-25.9-4.5-38.6-9.1-15.5-5.6-27.9-8.5-26.8-18 .5-4.4 7.4-8.9 20.6-13.6 81.3-35.4 135.5-58 162.7-69.3 77.2-32 93.3-37.7 103.8-37.9 2.3-.1 7.3 .5 10.5 2.6 2.5 1.7 3.3 4 3.7 6.1s.5 4.8 .4 7.2z"/></svg> Telegram
+                                </button>
+                                <button onclick="shareOnTwitter()" class="flex-1 w-full bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-700 px-2 py-3 rounded-xl text-[13px] font-extrabold transition-all flex items-center justify-center gap-1.5 group">
+                                    <i data-lucide="twitter" class="w-4 h-4 group-hover:scale-110 transition-transform"></i> X
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="hidden lg:block lg:col-span-1 space-y-6 h-full">
+                    
+                    <section class="bg-brand-surface border border-gray-800 p-6 rounded-3xl shadow-lg">
+                        <h2 class="text-lg font-bold text-white mb-5 border-b border-gray-700 pb-3 flex items-center gap-2">
+                            <i data-lucide="trending-up" class="text-brand-accent w-5 h-5"></i> Popüler Rotalar
+                        </h2>
+                        <div id="popularRoutesSidebar" class="flex flex-col gap-4">
+                            </div>
+                    </section>
+
+                    <!-- Google Ads 300x600 Placeholder (Zaten mobilde gizli) - Yuvarlak köşeler kaldırıldı -->
+                    <section class="bg-brand-surface border border-gray-800 p-5 md:p-6 rounded-3xl shadow-lg flex flex-col items-center w-full sticky top-28">
+                        <div class="w-[300px] h-[600px] bg-brand-dark/80 border border-dashed border-gray-700 hover:border-brand-primary/50 flex flex-col items-center justify-center text-gray-500 shadow-inner relative overflow-hidden p-6 text-center transition-colors mx-auto">
+                            <i data-lucide="monitor-play" class="w-10 h-10 mb-3 opacity-50"></i>
+                            <span class="font-extrabold tracking-widest text-sm text-gray-400 mb-1 text-center">SİDEBAR REKLAMI</span>
+                            <span class="text-[11px] mt-1 opacity-50 w-full text-center">300 x 600 (Half Page Ad)</span>
+                        </div>
+                    </section>
+
+                </div>
+            </div>
+        </div>
+
+        <div id="blogSection" class="hidden animate-fade-in pt-0 pb-0 no-print">
+            <div class="text-center mb-10">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-primary/20 border border-brand-primary/40 text-brand-primary text-xs font-bold uppercase tracking-wider mb-4">
+                    <i data-lucide="pen-tool" class="w-3.5 h-3.5"></i> Kamp Rehberi
+                </div>
+                <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-4">Kampingo <span class="text-brand-accent">Blog</span></h2>
+                <p class="text-gray-400 text-lg max-w-3xl mx-auto leading-relaxed mb-8">Türkiye'nin en iyi kamp rotaları, doğru çadır seçimi, profesyonel kamp ekipmanları incelemeleri ve doğada hayatta kalma ipuçları ile dolu Kampingo kamp rehberini keşfedin. Güvenli, konforlu ve unutulmaz bir kamp deneyimi için ihtiyacınız olan tüm detaylar burada!</p>
+                
+                <div class="flex flex-wrap justify-center gap-2 md:gap-3 max-w-5xl xl:max-w-6xl mx-auto pb-2">
+                    <button onclick="filterBlog('Tümü')" class="blog-cat-btn active bg-brand-primary text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center gap-2 border border-brand-primary" data-cat="Tümü">
+                        <i data-lucide="layout-grid" class="w-4 h-4"></i> Tümü <span class="opacity-75 text-xs ml-0.5">(6)</span>
+                    </button>
+                    <button onclick="filterBlog('Rota Önerileri')" class="blog-cat-btn bg-brand-surface hover:bg-brand-primary/20 text-gray-300 hover:text-brand-primary px-4 py-2.5 rounded-xl font-bold text-sm transition-all border border-gray-700 hover:border-brand-primary/50 flex items-center gap-2" data-cat="Rota Önerileri">
+                        <i data-lucide="map" class="w-4 h-4"></i> Rota Önerileri <span class="opacity-75 text-xs ml-0.5">(1)</span>
+                    </button>
+                    <button onclick="filterBlog('Ücretsiz Kamp Alanları')" class="blog-cat-btn bg-brand-surface hover:bg-brand-primary/20 text-gray-300 hover:text-brand-primary px-4 py-2.5 rounded-xl font-bold text-sm transition-all border border-gray-700 hover:border-brand-primary/50 flex items-center gap-2" data-cat="Ücretsiz Kamp Alanları">
+                        <i data-lucide="tent" class="w-4 h-4"></i> Ücretsiz Kamp Alanları <span class="opacity-75 text-xs ml-0.5">(0)</span>
+                    </button>
+                    <button onclick="filterBlog('Kamp Rehberi')" class="blog-cat-btn bg-brand-surface hover:bg-brand-primary/20 text-gray-300 hover:text-brand-primary px-4 py-2.5 rounded-xl font-bold text-sm transition-all border border-gray-700 hover:border-brand-primary/50 flex items-center gap-2" data-cat="Kamp Rehberi">
+                        <i data-lucide="book-open" class="w-4 h-4"></i> Kamp Rehberi <span class="opacity-75 text-xs ml-0.5">(5)</span>
+                    </button>
+                    <button onclick="filterBlog('Kamp Ekipmanları')" class="blog-cat-btn bg-brand-surface hover:bg-brand-primary/20 text-gray-300 hover:text-brand-primary px-4 py-2.5 rounded-xl font-bold text-sm transition-all border border-gray-700 hover:border-brand-primary/50 flex items-center gap-2" data-cat="Kamp Ekipmanları">
+                        <i data-lucide="backpack" class="w-4 h-4"></i> Kamp Ekipmanları <span class="opacity-75 text-xs ml-0.5">(0)</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="blogGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+            
+            <div id="noBlogResults" class="hidden text-center py-16 bg-brand-surface/30 rounded-3xl border border-dashed border-gray-700 max-w-4xl mx-auto mt-4">
+                <div class="inline-block p-4 bg-brand-surface rounded-full mb-4">
+                    <i data-lucide="folder-open" class="h-10 w-10 text-gray-500"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Bu Kategoride Henüz Yazı Yok</h3>
+                <p class="text-gray-400 text-sm">İçerik yöneticimiz yakında bu alana harika içerikler ekleyecek.</p>
+            </div>
+        </div>
+
+        <div id="articleSection" class="hidden animate-fade-in pt-0 pb-0 w-full no-print">
+            <div class="bg-brand-surface border border-gray-800 rounded-3xl overflow-hidden shadow-2xl">
+                <div class="w-full h-64 md:h-[30rem] lg:h-[36rem] relative">
+                    <img id="articleImage" src="" alt="Blog Görseli" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-gradient-to-t from-brand-surface via-transparent to-transparent"></div>
+                </div>
+                
+                <div class="p-6 md:p-12 lg:p-16 -mt-16 md:-mt-24 relative z-10">
+                    <h1 id="articleTitle" class="text-3xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 leading-tight drop-shadow-md"></h1>
+                    
+                    <div class="flex items-center gap-4 text-sm text-gray-400 mb-4 border-b border-gray-800 pb-4">
+                        <span class="flex items-center gap-1"><i data-lucide="calendar" class="w-4 h-4"></i> 1 Mart 2026</span>
+                        <span class="flex items-center gap-1"><i data-lucide="clock" class="w-4 h-4"></i> 5 dk okuma</span>
+                        <span class="flex items-center gap-1 text-brand-primary font-bold bg-brand-primary/10 px-2 py-1 rounded-md"><i data-lucide="feather" class="w-4 h-4"></i> Ufuk YILDIZ</span>
+                    </div>
+                    
+                    <div id="articleContent" class="article-content text-base md:text-lg"></div>
+                    
+                    <!-- BLOG MAKALE İÇERİK REKLAM ALANI -->
+                    <div class="w-full flex flex-col items-start justify-start py-6 no-print">
+                        <!-- Desktop (336x280) - mx-auto kaldırılarak tamamen sola yaslandı -->
+                        <div class="hidden md:flex w-[336px] h-[280px] bg-brand-dark/80 border border-dashed border-gray-700 hover:border-brand-primary/50 flex-col items-center justify-center text-gray-500 shadow-inner relative overflow-hidden p-6 text-center transition-colors">
+                            <i data-lucide="monitor-play" class="w-8 h-8 mb-2 opacity-50"></i>
+                            <span class="font-extrabold tracking-widest text-xs text-gray-400 mb-1">MAKALE REKLAMI</span>
+                            <span class="text-[10px] mt-1 opacity-50">336 x 280 (Large Rectangle)</span>
+                        </div>
+                        <!-- Mobile (300x250) - mx-auto kaldırılarak tamamen sola yaslandı -->
+                        <div class="flex md:hidden w-[300px] h-[250px] bg-brand-dark/80 border border-dashed border-gray-700 hover:border-brand-primary/50 flex-col items-center justify-center text-gray-500 shadow-inner relative overflow-hidden p-4 text-center transition-colors">
+                            <i data-lucide="smartphone" class="w-6 h-6 mb-1.5 opacity-50"></i>
+                            <span class="font-extrabold tracking-widest text-[10px] text-gray-400">MAKALE REKLAMI</span>
+                            <span class="text-[9px] mt-0.5 opacity-50">300 x 250 (Medium Rectangle)</span>
+                        </div>
+                    </div>
+
+                    <!-- Sosyal medya paylaşım alanı kamp detay sayfasındaki gibi mobilde alt alta yapıldı -->
+                    <div class="mt-6 flex flex-col gap-4">
+                        <p class="text-white font-bold text-lg flex items-center gap-2">
+                            <i data-lucide="share-2" class="w-5 h-5 text-brand-accent"></i> Bu blog yazısını arkadaşlarınla paylaş:
+                        </p>
+                        <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 w-full">
+                            <button onclick="copyArticleLink()" class="flex-1 w-full bg-brand-primary/10 hover:bg-brand-primary text-brand-primary hover:text-white border border-brand-primary/30 px-2 py-3 rounded-xl text-[13px] font-extrabold transition-all flex items-center justify-center gap-1.5 group">
+                                <i data-lucide="link" class="w-4 h-4 group-hover:scale-110 transition-transform"></i> Kopyala
+                            </button>
+                            <button onclick="shareOnWhatsApp()" class="flex-1 w-full bg-[#25D366]/10 hover:bg-[#25D366] text-[#25D366] hover:text-white border border-[#25D366]/30 px-2 py-3 rounded-xl text-[13px] font-extrabold transition-all flex items-center justify-center gap-1.5 group">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="w-4 h-4 fill-current group-hover:scale-110 transition-transform"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157.1zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7 .9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg> WhatsApp
+                            </button>
+                            <button onclick="shareOnTelegram()" class="flex-1 w-full bg-[#0088cc]/10 hover:bg-[#0088cc] text-[#0088cc] hover:text-white border border-[#0088cc]/30 px-2 py-3 rounded-xl text-[13px] font-extrabold transition-all flex items-center justify-center gap-1.5 group">
+                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512" class="w-4 h-4 fill-current group-hover:scale-110 transition-transform"><path d="M248 8C111 8 0 119 0 256S111 504 248 504 496 393 496 256 385 8 248 8zM363 176.7c-3.7 39.2-19.9 134.4-28.1 178.3-3.5 18.6-10.3 24.8-16.9 25.4-14.4 1.3-25.3-9.5-39.3-18.7-21.8-14.3-34.2-23.2-55.3-37.2-24.5-16.1-8.6-25 5.3-39.5 3.7-3.8 67.1-61.5 68.3-66.7 .2-.7 .3-3.1-1.2-4.4s-3.6-.8-5.1-.5q-3.3 .7-104.6 69.1-14.8 10.2-26.9 9.9c-8.9-.2-25.9-4.5-38.6-9.1-15.5-5.6-27.9-8.5-26.8-18 .5-4.4 7.4-8.9 20.6-13.6 81.3-35.4 135.5-58 162.7-69.3 77.2-32 93.3-37.7 103.8-37.9 2.3-.1 7.3 .5 10.5 2.6 2.5 1.7 3.3 4 3.7 6.1s.5 4.8 .4 7.2z"/></svg> Telegram
+                            </button>
+                            <button onclick="shareOnTwitter()" class="flex-1 w-full bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-700 px-2 py-3 rounded-xl text-[13px] font-extrabold transition-all flex items-center justify-center gap-1.5 group">
+                                <i data-lucide="twitter" class="w-4 h-4 group-hover:scale-110 transition-transform"></i> X
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 bg-brand-dark/50 border border-gray-800 rounded-2xl p-6 md:p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6 transition-all hover:border-brand-primary/30">
+                        <div class="w-20 h-20 rounded-full overflow-hidden shrink-0 border-2 border-brand-primary p-1 bg-brand-surface">
+                            <img src="https://i.hizliresim.com/o26fz1i.png" onerror="this.src='https://i.hizliresim.com/o26fz1i.jpg'" alt="Ufuk YILDIZ" class="w-full h-full object-cover rounded-full bg-white/5">
+                        </div>
+                        <div class="text-center sm:text-left flex-1">
+                            <h4 class="text-white font-bold text-lg md:text-xl flex items-center justify-center sm:justify-start gap-2 mb-1">
+                                Ufuk YILDIZ <i data-lucide="badge-check" class="w-5 h-5 text-brand-primary"></i>
+                            </h4>
+                            <p class="text-brand-primary text-xs font-bold uppercase tracking-wider mb-2">Kampingo Blog Yöneticisi</p>
+                            <p class="text-gray-400 text-sm md:text-base leading-relaxed">
+                                Türkiye'nin saklı kalmış doğa harikalarını ve kamp rotalarını titizlikle inceleyen içerik yöneticimiz. Okurlarımıza güvenli, konforlu ve eşsiz bir kamp deneyimi sunmak amacıyla detaylı rehberler ve kapsamlı rotalar hazırlamaktadır.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Üst boşluk mt-12'den mt-8'e çekilerek alttaki boşluk ile matematiksel olarak eşitlendi -->
+            <div class="mt-8 relative rounded-3xl overflow-hidden border border-brand-primary/40 bg-brand-dark py-8 px-6 md:px-10 text-center shadow-2xl group">
+                <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=1200&q=80')] bg-cover bg-center opacity-40 group-hover:opacity-50 transition-opacity duration-700"></div>
+                <div class="absolute inset-0 bg-gradient-to-t from-brand-dark via-brand-dark/80 to-transparent"></div>
+                
+                <div class="relative z-10 flex flex-col items-center">
+                    <div class="w-12 h-12 bg-brand-primary/20 border border-brand-primary/30 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-500">
+                        <i data-lucide="tent" class="w-6 h-6 text-brand-primary"></i>
+                    </div>
+                    <h3 class="text-2xl md:text-3xl font-extrabold text-white mb-2 drop-shadow-md">Türkiye’nin En Güzel Kamp Rotalarını Keşfetmeye Hazır mısın?</h3>
+                    <p class="text-gray-300 mb-6 max-w-xl mx-auto text-sm md:text-base leading-relaxed drop-shadow">
+                        Binlerce kamp alanını filtrele, harita üzerinde incele ve sana en uygun rotayı bul.
+                    </p>
+                    <button onclick="showHome(); setTimeout(scrollToResults, 100);" class="bg-brand-primary hover:bg-emerald-500 text-white px-8 py-3.5 rounded-xl font-bold text-base transition-all shadow-[0_0_10px_rgba(5,150,105,0.3)] hover:shadow-[0_0_15px_rgba(5,150,105,0.4)] flex items-center justify-center gap-2 transform group-hover:-translate-y-1">
+                        <i data-lucide="scan-search" class="w-5 h-5"></i> Kamp Alanlarını Keşfet
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="bungalowSection" class="hidden animate-fade-in pt-0 pb-0 no-print">
+            <div class="relative rounded-3xl overflow-hidden mb-6 shadow-2xl border border-[#d18c10]/30 bg-brand-dark group">
+                <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1587061949409-02df41d5e562?auto=format&fit=crop&w=1200&q=80')] bg-cover bg-center opacity-40 group-hover:opacity-50 transition-opacity duration-700"></div>
+                <div class="absolute inset-0 bg-gradient-to-r from-brand-dark via-brand-dark/80 to-transparent"></div>
+                
+                <div class="relative p-8 md:p-12 lg:p-16 flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div class="max-w-2xl">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#d18c10]/20 border border-[#d18c10]/40 text-[#d18c10] text-xs font-bold mb-4 uppercase tracking-wider">
+                            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Premium Deneyim
+                        </div>
+                        <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-4">Doğadaki <span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-[#d18c10]">Lüks Kaçamağınız</span></h2>
+                        <p class="text-gray-200 text-lg md:text-xl font-medium mb-8 leading-relaxed">
+                            Kamp yapmayı seviyorsunuz ama konfordan da ödün vermek istemiyor musunuz? Türkiye'nin en seçkin bungalov, glamping ve tiny house işletmeleri Kampingo güvencesiyle burada.
+                        </p>
+                        
+                        <div class="bg-brand-surface/80 backdrop-blur border border-[#d18c10]/30 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-left w-full">
+                            <div class="flex flex-col gap-0.5">
+                                <h4 class="text-white font-bold text-base md:text-lg leading-tight">İşletme Sahibi misiniz?</h4>
+                                <p class="text-gray-300 text-sm md:text-base leading-tight">Binlerce doğa severe tesisinizi tanıtın.</p>
+                            </div>
+                            <button onclick="showContact()" class="shrink-0 bg-[#d18c10] hover:bg-yellow-600 text-white font-bold py-2.5 px-5 rounded-xl text-sm md:text-base transition-colors flex items-center gap-2 shadow-lg shadow-[#d18c10]/20 mt-2 sm:mt-0">
+                                <i data-lucide="megaphone" class="w-4 h-4 md:w-5 md:h-5"></i> Reklam Verin
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full mb-6 bg-[#d18c10]/10 border border-[#d18c10]/30 rounded-2xl p-4 md:p-5 flex items-start sm:items-center gap-4 shadow-lg backdrop-blur-sm">
+                <div class="bg-[#d18c10]/20 p-2.5 rounded-full shrink-0">
+                    <i data-lucide="construction" class="w-6 h-6 text-[#d18c10]"></i>
+                </div>
+                <div>
+                    <p class="text-gray-300 text-xs md:text-sm leading-relaxed">Bu sayfada listelenen tesisler <strong>örnek</strong> amaçlıdır. Henüz gerçek bir rezervasyon veya yönlendirme yapılmamaktadır.<br>İşletmenizi listelemek için <a href="#" onclick="showContact(); return false;" class="text-[#d18c10] hover:text-yellow-400 font-bold transition-colors">iletişim</a> sayfasından bizimle iletişime geçebilirsiniz.</p>
+                </div>
+            </div>
+
+            <!-- Alt kutu ile üst grid arasındaki boşluk mb-12'den mb-8'e çekilerek alt boşlukla eşitlendi -->
+            <div id="bungalowGrid" class="grid grid-cols-1 w-full gap-10 mb-8"></div>
+            
+            <div class="text-center bg-brand-surface border border-gray-800 rounded-3xl p-8 w-full">
+                <div class="w-20 h-20 bg-brand-dark rounded-full flex items-center justify-center mx-auto mb-5 border border-[#d18c10]/30 shadow-lg">
+                    <i data-lucide="store" class="w-10 h-10 text-[#d18c10]"></i>
+                </div>
+                <h3 class="text-xl md:text-2xl font-bold text-white mb-2">İşletmenizi Sayfamıza Eklemek İster Misiniz?</h3>
+                <p class="text-gray-400 text-sm md:text-base mb-6 leading-relaxed max-w-2xl mx-auto">Bu alan tamamen seçkin işletmelere ayrılmıştır. Tesisinizin fotoğrafları, iletişim bilgileri ve özellikleri ile bu sayfada yer almak için bizimle iletişime geçin.</p>
+                <button onclick="showContact()" class="bg-brand-dark hover:bg-gray-800 border border-gray-600 text-[#d18c10] hover:text-yellow-400 font-bold py-2.5 px-6 rounded-xl transition-all shadow-md flex items-center gap-2 mx-auto">
+                    <i data-lucide="mail" class="w-4 h-4"></i> İletişime Geçin
+                </button>
+            </div>
+        </div>
+
+        <div id="marketSection" class="hidden animate-fade-in pt-0 pb-0 no-print">
+            <div class="relative rounded-3xl overflow-hidden mb-6 shadow-2xl border border-brand-primary/30 bg-brand-dark group">
+                <div class="absolute inset-0 bg-[url('https://images.pexels.com/photos/1840421/pexels-photo-1840421.jpeg?auto=compress&cs=tinysrgb&w=1200')] bg-cover bg-center opacity-30 group-hover:opacity-40 transition-opacity duration-700"></div>
+                <div class="absolute inset-0 bg-gradient-to-r from-brand-dark via-brand-dark/80 to-transparent"></div>
+                
+                <div class="relative p-8 md:p-12 lg:p-16 flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div class="max-w-2xl">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-primary/20 border border-brand-primary/40 text-brand-primary text-xs font-bold mb-4 uppercase tracking-wider">
+                            <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i> Premium Donanımlar
+                        </div>
+                        <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-4">Kampingo <span class="text-brand-primary">Kamp Market</span></h2>
+                        <p class="text-gray-200 text-lg md:text-xl font-medium mb-8 leading-relaxed">
+                            Doğadaki eksiklerinizi tamamlayın! Profesyonel çadırlardan, kamp ocaklarına ve uyku tulumlarına kadar en kaliteli kamp ekipmanları seçkin satıcıların güvencesiyle burada.
+                        </p>
+                        
+                        <div class="bg-brand-surface/80 backdrop-blur border border-brand-primary/30 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-left w-full">
+                            <div class="flex flex-col gap-0.5">
+                                <h4 class="text-white font-bold text-base md:text-lg leading-tight">Kamp Ekipmanları mı Satıyorsunuz?</h4>
+                                <p class="text-gray-300 text-sm md:text-base leading-tight">Ürünlerinizi binlerce doğasever ile buluşturun.</p>
+                            </div>
+                            <button onclick="showContact()" class="shrink-0 bg-brand-primary hover:bg-emerald-500 text-white font-bold py-2.5 px-5 rounded-xl text-sm md:text-base transition-colors flex items-center gap-2 shadow-lg shadow-brand-primary/20 mt-2 sm:mt-0">
+                                <i data-lucide="megaphone" class="w-4 h-4 md:w-5 md:h-5"></i> Ürünlerinizi Listeleyin
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="max-w-7xl mx-auto mb-6 bg-[#d18c10]/10 border border-[#d18c10]/30 rounded-2xl p-4 md:p-5 flex items-start sm:items-center gap-4 shadow-lg backdrop-blur-sm">
+                <div class="bg-[#d18c10]/20 p-2.5 rounded-full shrink-0">
+                    <i data-lucide="construction" class="w-6 h-6 text-[#d18c10]"></i>
+                </div>
+                <div>
+                    <p class="text-gray-300 text-xs md:text-sm leading-relaxed">Bu sayfada listelenen ürünler <strong>örnek</strong> amaçlıdır. Henüz gerçek bir satış veya yönlendirme yapılmamaktadır.<br>Ürünlerinizi listelemek için <a href="#" onclick="showContact(); return false;" class="text-[#d18c10] hover:text-yellow-400 font-bold transition-colors">iletişim</a> sayfasından bizimle iletişime geçebilirsiniz.</p>
+                </div>
+            </div>
+
+            <!-- Alt kutu ile üst grid arasındaki boşluk mb-12'den mb-8'e çekilerek alt boşlukla eşitlendi -->
+            <div id="marketGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto mb-8"></div>
+            
+            <div class="text-center bg-brand-surface border border-gray-800 rounded-3xl p-8 w-full mx-auto">
+                <div class="w-20 h-20 bg-brand-dark rounded-full flex items-center justify-center mx-auto mb-5 border border-brand-primary/20 shadow-lg">
+                    <i data-lucide="shopping-cart" class="w-10 h-10 text-brand-primary"></i>
+                </div>
+                <h3 class="text-xl md:text-2xl font-bold text-white mb-2">Kamp Ürünlerinizi Doğru Kitleyle Buluşturun</h3>
+                <p class="text-gray-400 text-sm md:text-base mb-6 leading-relaxed max-w-2xl mx-auto">Kamp çadırları, uyku tulumları, termoslar ve tüm kamp ekipmanlarınızı doğrudan hedef kitlenize ulaştırmak için bizimle iletişime geçin.</p>
+                <button onclick="showContact()" class="bg-brand-dark hover:bg-gray-800 border border-gray-600 text-brand-primary hover:text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-md flex items-center gap-2 mx-auto">
+                    <i data-lucide="mail" class="w-4 h-4"></i> İletişime Geçin
+                </button>
+            </div>
+        </div>
+
+        <div id="checklistSection" class="hidden animate-fade-in pt-28 pb-0">
+            
+            <div class="relative rounded-3xl overflow-hidden mb-8 shadow-2xl border border-brand-primary/30 bg-brand-dark group no-print max-w-4xl mx-auto">
+                <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1504280502833-2a0e43e0618b?auto=format&fit=crop&w=1200&q=80')] bg-cover bg-center opacity-30 group-hover:opacity-40 transition-opacity duration-700"></div>
+                <div class="absolute inset-0 bg-gradient-to-r from-brand-dark via-brand-dark/90 to-transparent"></div>
+                
+                <div class="relative p-8 md:p-12 flex flex-col items-start gap-4">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-primary/20 border border-brand-primary/40 text-brand-primary text-xs font-bold uppercase tracking-wider">
+                        <i data-lucide="list-checks" class="w-3.5 h-3.5"></i> İnteraktif Liste
+                    </div>
+                    
+                    <!-- pb-2 eklendi: Gradient arka planın "g" harfinin kuyruğunu kesmesini engeller -->
+                    <h1 class="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-yellow-300 leading-tight pb-2">
+                        Kampingo Kamp Malzeme Listesi
+                    </h1>
+                    
+                    <!-- mt-2 silindi -->
+                    <div class="space-y-3">
+                        <h2 class="text-xl md:text-2xl font-bold text-white">Kampa Giderken Yanınıza Almanız Gereken Tüm Ekipmanlar</h2>
+                        <p class="text-gray-300 text-base md:text-lg leading-relaxed">
+                            Doğayla buluşmadan önce doğru hazırlık yapmak kamp deneyiminizi konforlu ve güvenli hale getirir. Kampingo olarak sizin için kategori kategori hazırlanmış, güncel ve eksiksiz bir kamp malzeme listesi oluşturduk. İster ilk kez kampa gidiyor olun ister deneyimli bir kampçı olun, aşağıdaki liste kamp çantanızı hazırlarken rehberiniz olacak.
+                        </p>
+                        <p class="text-gray-400 text-sm flex items-center gap-2 mt-4">
+                            <i data-lucide="info" class="w-4 h-4 text-brand-accent shrink-0"></i> 
+                            İşaretlediğiniz öğeler tarayıcınıza kaydedilir, sayfayı yenileseniz bile kaybolmaz.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="max-w-4xl mx-auto bg-brand-surface border border-brand-primary/40 rounded-2xl p-5 md:p-6 mb-10 shadow-lg sticky top-24 z-40 backdrop-blur-md no-print">
+                <div class="w-full">
+                    <div class="flex justify-between items-end mb-2">
+                        <span class="text-white font-bold text-lg">Hazırlık Durumu</span>
+                        <span id="checklistProgressText" class="text-brand-accent font-bold">Tamamlananlar: 0 / 0</span>
+                    </div>
+                    <div class="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
+                        <div id="checklistProgressBar" class="bg-gradient-to-r from-brand-primary to-emerald-400 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="pdfContentArea" class="max-w-4xl mx-auto bg-[#0a1410] rounded-3xl p-6 md:p-10 border border-gray-800">
+                <div id="pdfHeader" class="hidden text-center mb-8 pb-6 border-b border-gray-700">
+                    <h1 class="text-3xl font-bold text-white mb-2">Kampingo Kamp Malzeme Listesi</h1>
+                    <p class="text-gray-400 text-sm">Türkiye'nin En İyi Kamp Rotaları - Kampingo.com</p>
+                </div>
+
+                <div id="checklistRenderArea" class="space-y-8"></div>
+                
+                <div id="pdfFooter" class="hidden text-center mt-12 pt-6 border-t border-gray-700 flex flex-col items-center">
+                    <img id="pdfFooterLogo" src="https://api.allorigins.win/raw?url=https%3A%2F%2Fkampingo.com%2Fimages%2Fassets%2Fpdf-footer-logo.webp" crossorigin="anonymous" alt="Kampingo Logo" class="h-8 md:h-10 w-auto mx-auto mb-3 object-contain">
+                    <p class="text-gray-500 text-xs">Geldiğin gibi bırak, doğa sana teşekkür etsin. 🌿</p>
+                </div>
+            </div>
+
+            <div class="max-w-2xl mx-auto mt-10 flex flex-row items-center justify-center gap-4 no-print">
+                <button onclick="resetChecklist()" class="w-1/2 bg-brand-accent/10 hover:bg-brand-accent/20 text-brand-accent border border-brand-accent/30 px-4 md:px-8 py-3.5 rounded-xl font-bold transition flex items-center justify-center gap-2 text-sm md:text-lg">
+                    <i data-lucide="rotate-ccw" class="w-5 h-5 md:w-6 md:h-6"></i> <span class="whitespace-nowrap">Seçimleri Sıfırla</span>
+                </button>
+                <button onclick="downloadPDF()" class="w-1/2 bg-brand-primary hover:bg-emerald-50 text-white px-4 md:px-8 py-3.5 rounded-xl font-bold transition shadow-lg flex items-center justify-center gap-2 text-sm md:text-lg group">
+                    <i data-lucide="file-down" class="w-5 h-5 md:w-6 md:h-6 group-hover:-translate-y-1 transition-transform"></i> <span class="whitespace-nowrap">Listeyi PDF İndir</span>
+                </button>
+            </div>
+
+            <div class="max-w-4xl mx-auto mt-8 mb-0 bg-brand-accent/10 border border-brand-accent/30 rounded-2xl p-6 text-center no-print relative overflow-hidden">
+                <div class="absolute top-0 right-0 -mt-6 -mr-6 w-24 h-24 bg-brand-accent/20 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="absolute bottom-0 left-0 -mb-6 -ml-6 w-24 h-24 bg-brand-accent/10 rounded-full blur-2xl pointer-events-none"></div>
+                
+                <h3 class="text-xl font-bold text-brand-accent mb-3 flex items-center justify-center gap-2 relative z-10">
+                    📌 Kampingo Önerisi
+                </h3>
+                <p class="text-gray-300 leading-relaxed text-sm md:text-base mb-3 relative z-10">
+                    Kamp malzeme listesi kamp süresine, mevsime ve kamp türüne göre değişiklik gösterebilir. Kampingo olarak doğaya çıkmadan önce hazırlığınızı eksiksiz yapmanızı öneririz.
+                </p>
+                <p class="text-white font-bold relative z-10 text-lg">
+                    Unutmayın: Planlı bir kamp, konforlu bir deneyim demektir.
+                </p>
+            </div>
+        </div>
+
+        <div id="contactSection" class="hidden animate-fade-in pt-28 pb-0 no-print">
+            <div class="w-full glass-panel rounded-3xl p-8 md:p-12 text-center relative overflow-hidden border border-brand-primary/30 shadow-2xl">
+                <div class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-brand-primary/20 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-brand-primary/20 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <div class="relative z-10 flex flex-col items-center">
+                    <div class="mb-8">
+                        <img src="https://i.hizliresim.com/qs0rs5b.png" alt="İletişim" class="w-64 h-64 md:w-80 md:h-80 object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-300">
+                    </div>
+                    
+                    <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-4">Kampingo'ya Yaz</h2>
+                    <p class="text-gray-300 text-lg md:text-xl mb-10 max-w-4xl">
+                        Yeni bir kamp rotası mı keşfettin? İşbirliği mi yapmak istiyorsun? Yoksa sadece selam mı vereceksin? Kampingo kuşu mesajını taşımak için <span class="whitespace-nowrap">hazır! <i data-lucide="bird" class="inline w-6 h-6 text-brand-primary align-text-bottom mx-1 select-none pointer-events-none"></i><span class="select-none pointer-events-none">⛺</span></span>
+                    </p>
+                    
+                    <div class="flex flex-col lg:flex-row items-stretch justify-center w-full max-w-5xl gap-6 lg:gap-0 mt-2">
+                        
+                        <div class="bg-brand-dark/80 border border-gray-700 rounded-2xl p-8 lg:p-8 xl:p-10 w-full lg:w-[35%] flex flex-col items-center justify-center text-center shadow-2xl backdrop-blur-sm relative">
+                            <div class="w-16 h-16 bg-brand-primary/10 rounded-full flex items-center justify-center mb-6">
+                                <i data-lucide="mail-open" class="w-8 h-8 text-brand-primary"></i>
+                            </div>
+                            <h3 class="text-brand-accent font-bold text-sm uppercase tracking-wider mb-3">Doğrudan Bize Ulaşın</h3>
+                            <a href="mailto:iletisim@kampingo.com" class="text-xl xl:text-2xl font-extrabold text-white hover:text-brand-primary transition-colors mb-8 break-all sm:break-normal">
+                                iletisim@kampingo.com
+                            </a>
+                            
+                            <button id="copyEmailBtn" onclick="copyEmail()" class="bg-brand-surface hover:bg-brand-primary border border-gray-600 hover:border-brand-primary text-white font-bold py-3.5 px-8 rounded-xl transition-all flex items-center justify-center gap-2 group cursor-pointer text-sm shadow-md w-full sm:w-auto">
+                                <i data-lucide="copy" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                                <span>Adresi Kopyala</span>
+                            </button>
+                        </div>
+
+                        <div class="flex lg:flex-col items-center justify-center w-full lg:w-[10%] py-4 lg:py-0 relative">
+                            <div class="h-px w-full lg:h-full lg:w-px bg-gray-700/50 flex-1"></div>
+                            <div class="bg-brand-dark border border-gray-700 text-gray-400 text-[10px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-widest absolute lg:static left-1/2 -translate-x-1/2 lg:translate-x-0 z-10 shadow-lg whitespace-nowrap">
+                                Veya
+                            </div>
+                            <div class="h-px w-full lg:h-full lg:w-px bg-gray-700/50 flex-1"></div>
+                        </div>
+
+                        <form id="contactForm" onsubmit="event.preventDefault(); return handleContactSubmit(event);" action="https://api.web3forms.com/submit" method="POST" class="bg-brand-dark/80 border border-gray-700 rounded-2xl p-6 lg:p-10 w-full lg:w-[55%] flex flex-col justify-center shadow-2xl backdrop-blur-sm text-left">
+                            <input type="hidden" name="access_key" value="52db3aee-c5bc-4532-9160-55ee1638446b">
+                            <input type="hidden" name="subject" value="Kampingo'dan Yeni Bir Mesaj Var! 🏕️">
+                            <input type="checkbox" name="botcheck" class="hidden" style="display: none;">
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-brand-accent text-sm font-bold mb-1.5" for="name">Adınız Soyadınız</label>
+                                    <input type="text" id="name" name="name" required class="w-full bg-brand-surface border border-gray-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors placeholder-gray-500" placeholder="Doğa Sever">
+                                </div>
+                                <div>
+                                    <label class="block text-brand-accent text-sm font-bold mb-1.5" for="email">E-Posta Adresiniz</label>
+                                    <input type="email" id="email" name="email" required class="w-full bg-brand-surface border border-gray-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors placeholder-gray-500" placeholder="ornek@mail.com">
+                                </div>
+                                <div>
+                                    <label class="block text-brand-accent text-sm font-bold mb-1.5" for="message">Mesajınız</label>
+                                    <textarea id="message" name="message" rows="6" required class="w-full bg-brand-surface border border-gray-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors resize-none placeholder-gray-500" placeholder="Harika bir kamp rotası keşfettim..."></textarea>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" id="submitBtn" class="mt-6 w-full bg-brand-primary hover:bg-brand-primary/80 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg hover:shadow-brand-primary/30 flex items-center justify-center gap-2 group cursor-pointer">
+                                <i data-lucide="send" class="w-5 h-5 group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform"></i>
+                                <span>Mesajı Gönder</span>
+                            </button>
+
+                            <div id="formStatus" class="hidden mt-4 text-sm p-3.5 rounded-xl font-medium text-center transition-all"></div>
+                        </form>
+                    </div>
+
+                    <div class="mt-12 pt-8 md:pt-12 border-t border-gray-800 w-full flex flex-col items-center">
+                        <p class="text-gray-500 text-sm mb-3">Kampingo, doğa severler için geliştirilmiş bir <a href="https://gumorstudio.com/" target="_blank" class="text-brand-primary hover:text-brand-accent font-bold transition-colors">Gumor Studio</a> projesidir.</p>
+                        <a href="https://www.instagram.com/gumorstudio/" target="_blank" class="text-brand-primary hover:text-brand-accent transition-colors flex items-center gap-2 text-base font-bold">
+                            <i data-lucide="instagram" class="w-5 h-5"></i> @gumorstudio
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="resultsSection" class="flex items-center justify-between mt-8 mb-4 transition-all no-print">
+            <h3 class="text-xl font-bold text-white">
+                <span class="text-brand-primary"><span id="count">0</span> Adet</span> <span id="resultsText">Eşsiz Rota Bulundu</span>
+            </h3>
+        </div>
+
+        <div id="campGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 transition-all duration-500 no-print">
+        </div>
+
+        <div id="loadMoreContainer" class="hidden flex justify-center mt-12 mb-0 px-2 w-full no-print">
+        </div>
+
+        <div id="noResults" class="hidden text-center py-24 bg-brand-surface/30 rounded-3xl mt-8 border border-dashed border-gray-700 no-print">
+            <div class="inline-block p-4 bg-brand-surface rounded-full mb-4">
+                <i data-lucide="search-x" class="h-12 w-12 text-gray-500"></i>
+            </div>
+            <h3 id="noResultsTitle" class="text-2xl font-bold text-white mb-2">Rota Bulunamadı</h3>
+            <p id="noResultsText" class="text-gray-400">Kampingo bu kriterlere uygun bir yer bulamadı. Filtreleri biraz gevşetmeye ne dersin?</p>
+            <button id="noResultsBtn" onclick="resetFilters()" class="mt-6 bg-brand-primary text-white px-6 py-2 rounded-full hover:bg-brand-primary/80 transition">Tümünü Göster</button>
+        </div>
+
+    </main>
+
+    <!-- FOOTER ÜSTÜ REKLAM ALANI (Tüm sayfalarda en altta görünür) -->
+    <!-- Üst boşluk 0, alt boşluk ise Header reklamına eşitlenmesi için 32px (pb-8) yapıldı -->
+    <div id="globalFooterAd" class="w-full max-w-7xl mx-auto px-4 pt-0 pb-8 flex flex-col items-center justify-center no-print">
+        <!-- Desktop (970x250) - Yuvarlak köşeler kaldırıldı -->
+        <div class="hidden md:flex w-full max-w-[970px] aspect-[970/250] bg-brand-dark/80 border border-dashed border-gray-700 hover:border-brand-primary/50 flex-col items-center justify-center text-gray-500 shadow-inner relative overflow-hidden p-6 text-center transition-colors">
+            <i data-lucide="monitor-play" class="w-8 h-8 mb-2 opacity-50"></i>
+            <span class="font-extrabold tracking-widest text-xs text-gray-400 mb-1">REKLAM ALANI</span>
+            <span class="text-[10px] mt-1 opacity-50">970 x 250 (Billboard)</span>
+        </div>
+        <!-- Mobile (300x250) - Yuvarlak köşeler kaldırıldı -->
+        <div class="flex md:hidden w-[300px] h-[250px] bg-brand-dark/80 border border-dashed border-gray-700 hover:border-brand-primary/50 flex-col items-center justify-center text-gray-500 shadow-inner relative overflow-hidden p-4 text-center transition-colors">
+            <i data-lucide="smartphone" class="w-6 h-6 mb-1.5 opacity-50"></i>
+            <span class="font-extrabold tracking-widest text-[10px] text-gray-400">REKLAM ALANI</span>
+            <span class="text-[9px] mt-0.5 opacity-50">300 x 250 (Medium Rectangle)</span>
+        </div>
+    </div>
+
+    <footer class="border-t border-gray-800 bg-brand-dark py-12 no-print relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 relative">
+            <div class="flex flex-col items-center text-center">
+                <div class="flex items-center gap-2 mb-4">
+                    <img src="https://i.hizliresim.com/eyadqte.png" alt="Kampingo Logo" class="h-8 w-8 md:h-10 md:w-10 object-contain drop-shadow-lg">
+                    <span class="font-extrabold text-2xl text-white">Kampingo<span class="text-brand-accent">.</span></span>
+                </div>
+                
+                <div class="w-full relative flex justify-center items-center mb-4 min-h-[44px]">
+                    <p class="text-gray-400 text-sm max-w-[280px] sm:max-w-sm mx-auto leading-relaxed px-2">
+                        Kampingo, doğa severlerin buluşma noktasıdır. Türkiye'nin en güzel kamp alanlarını keşfet, planla, yola çık.
+                    </p>
+                    
+                    <div id="backToTopBtn" class="absolute right-0 md:right-4 z-10 transition-all duration-300 no-print">
+                        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="bg-emerald-500 hover:bg-emerald-400 text-white p-3 rounded-full shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/40 flex items-center justify-center group cursor-pointer" title="En Başa Dön">
+                            <i data-lucide="arrow-up" class="w-5 h-5 group-hover:-translate-y-1 transition-transform"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-center gap-1 mt-0">
+                    <p class="text-gray-500 text-xs font-medium">© 2026 Kampingo</p>
+                    <p class="text-gray-500 text-xs font-medium">Powered by <a href="https://gumorstudio.com/" target="_blank" class="text-brand-primary hover:text-brand-accent transition-colors">Gumor Studio</a></p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div style="width: 0; height: 0; overflow: hidden; position: absolute; opacity: 0; pointer-events: none;">
+        <img src="https://kampingo.com/images/assets/pdf-footer-logo.webp" crossorigin="anonymous" alt="preload">
+    </div>
+
+    <script>
+        const apiKey = ""; 
+        let currentFilteredData = [];
+        let currentDetailImages = [];
+        let currentImageIndex = 0;
+
+        const facilityIcons = {
+            wifi: { icon: 'wifi', label: 'Wi-Fi' },
+            wc: { icon: 'bath', label: 'WC' },
+            shower: { icon: 'shower-head', label: 'Duş' },
+            electricity: { icon: 'zap', label: 'Elektrik' },
+            water: { icon: 'droplet', label: 'İçme Suyu' },
+            bbq: { icon: 'flame', label: 'Mangal/Barbekü' },
+            parking: { icon: 'car', label: 'Otopark' },
+            playground: { icon: 'gamepad-2', label: 'Çocuk Oyun Alanı' },
+            pet: { icon: 'dog', label: 'Pati Dostu' }
+        };
+
+        const needsIcons = {
+            market: { icon: 'shopping-cart', label: 'Market' },
+            fuel: { icon: 'fuel', label: 'Benzin İstasyonu' },
+            pharmacy: { icon: 'pill', label: 'Eczane' },
+            atm: { icon: 'credit-card', label: 'ATM' },
+            hospital: { icon: 'hospital', label: 'Hastane' },
+            bakery: { icon: 'croissant', label: 'Fırın' }
+        };
+
+        const extractedCampNames = [
+            "Dumanlı Tabiat Parkı", 
+            "Hazar Gölü Tabiat Parkı", 
+            "Levent Vadisi", 
+            "Günpınar Şelalesi",
+            "Sarıkamış Allahuekber Milli Parkı", 
+            "Nemrut Dağı Milli Parkı", 
+            "Cendere Köprüsü", 
+            "Gölbaşı Gölleri Tabiat Parkı"
+        ];
+
+        const regionsList = ["Marmara", "Ege", "Akdeniz", "Karadeniz", "İç Anadolu", "Doğu Anadolu", "Güneydoğu Anadolu"];
+        
+        const filterOptions = {
+            region: [
+                { value: 'all', label: 'Tümü' },
+                ...regionsList.map(r => ({ value: r, label: r }))
+            ],
+            vibe: [
+                { value: 'all', label: 'Tümü', icon: 'layout-grid' },
+                { value: 'Deniz Kenarı', label: 'Deniz Kenarı', icon: 'waves' },
+                { value: 'Orman', label: 'Orman', icon: 'trees' },
+                { value: 'Yayla', label: 'Yayla', icon: 'mountain' },
+                { value: 'Göl Kenarı', label: 'Göl Kenarı', icon: 'droplets' }
+            ],
+            facility: [
+                { value: 'all', label: 'Tümü', icon: 'layout-grid' },
+                { value: 'wc', label: 'WC', icon: 'bath' },
+                { value: 'shower', label: 'Duş', icon: 'shower-head' },
+                { value: 'electricity', label: 'Elektrik', icon: 'zap' },
+                { value: 'water', label: 'İçme Suyu', icon: 'droplet' },
+                { value: 'bbq', label: 'Mangal/Barbekü', icon: 'flame' },
+                { value: 'parking', label: 'Otopark', icon: 'car' },
+                { value: 'wifi', label: 'Wi-Fi', icon: 'wifi' },
+                { value: 'pet', label: 'Pati Dostu', icon: 'dog' },
+                { value: 'playground', label: 'Çocuk Oyun Alanı', icon: 'gamepad-2' }
+            ]
+        };
+
+        const rawCamps = extractedCampNames.map((name, index) => {
+            let region = regionsList[index % regionsList.length];
+            let vibe = ["Orman"];
+            
+            if(name.toLowerCase().includes("koy") || name.toLowerCase().includes("plaj") || name.toLowerCase().includes("deniz")) {
+                vibe = ["Deniz Kenarı", "Orman"];
+                region = index % 2 === 0 ? "Ege" : "Akdeniz";
+            } else if (name.toLowerCase().includes("göl") || name.toLowerCase().includes("lagün")) {
+                vibe = ["Göl Kenarı", "Orman"];
+            } else if (name.toLowerCase().includes("yayla") || name.toLowerCase().includes("dağ") || name.toLowerCase().includes("vadi")) {
+                vibe = ["Yayla", "Orman"];
+            }
+
+            if (name === "Nemrut Dağı Milli Parkı") {
+                vibe = ["Yayla", "Orman", "Göl Kenarı"];
+            }
+            
+            const rating = (4.0 + (index % 10) / 10).toFixed(1);
+            const facilities = index % 3 === 0 ? ["wc", "parking"] : index % 2 === 0 ? ["wc", "shower", "electricity"] : ["wc", "water", "parking", "pet", "wifi"];
+            
+            const regionCities = {
+                "Marmara": ["Balıkesir", "Çanakkale", "Bursa", "İstanbul", "Sakarya", "Kocaeli", "Yalova"],
+                "Ege": ["Muğla", "İzmir", "Aydın", "Denizli", "Manisa"],
+                "Akdeniz": ["Antalya", "Mersin", "Burdur", "Isparta", "Adana"],
+                "Karadeniz": ["Bolu", "Rize", "Trabzon", "Artvin", "Ordu", "Kastamonu", "Sinop"],
+                "İç Anadolu": ["Nevşehir", "Kayseri", "Aksaray", "Ankara", "Eskişehir", "Konya"],
+                "Doğu Anadolu": ["Erzurum", "Erzincan", "Tunceli", "Kars", "Van", "Bitlis"],
+                "Güneydoğu Anadolu": ["Şanlıurfa", "Gaziantep", "Mardin", "Diyarbakır", "Adıyaman"]
+            };
+            const city = regionCities[region][index % regionCities[region].length];
+
+            return [name, region, city, rating, vibe, facilities];
+        });
+
+        const camps = rawCamps.map((c, index) => {
+            const baseImg = c[4].includes("Orman") ? "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80" : 
+                            c[4].includes("Deniz Kenarı") ? "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80" :
+                            c[4].includes("Göl Kenarı") ? "https://images.unsplash.com/photo-1506535995048-638aa1b62b77?auto=format&fit=crop&w=1200&q=80" :
+                            "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80";
+
+            return {
+                id: index + 1,
+                title: c[0],
+                region: c[1],
+                city: c[2],
+                rating: c[3],
+                vibe: c[4],
+                facilities: c[5],
+                image: baseImg,
+                shortDesc: `${c[0]}, doğanın tam kalbinde yer alan, eşsiz manzarası ve huzur veren atmosferiyle ziyaretçilerine unutulmaz bir kamp deneyimi sunan özel bir rotadır. Şehrin karmaşasından ve stresinden uzaklaşıp derin bir nefes almak, güne kuş sesleri eşliğinde uyanmak ve geceleri yıldızların altında sevdiklerinizle keyifli anlar yaşamak isteyen kamp severlerin en favori kaçış noktalarından biri haline gelmiştir.`,
+                longDesc: `
+                <h2 class="text-2xl md:text-3xl font-extrabold text-white mb-6 border-b border-gray-800 pb-3">${c[0]} Kamp Rehberi</h2>
+                <p><strong class="text-white">${c[0]}</strong>, kamp tutkunları ve doğa aşıkları için adeta saklı kalmış bir cennet köşesidir. Şehrin gürültüsünden, kalabalığından ve beton yığınlarından uzaklaşmak isteyenler için mükemmel bir kaçış noktası sunan bu eşsiz rota, tertemiz havası ve muhteşem manzaralarıyla sizi kucaklamaya hazır. Çevresini saran yemyeşil ağaçlar ve doğal doku, sabahları kuş cıvıltılarıyla uyanmanızı sağlarken, geceleri gökyüzünde parlayan binlerce yıldız eşliğinde kamp ateşinizin tadını çıkarmanıza olanak tanır. Kamp alanı, hem çadır hem de karavan kampı için uygun geniş düzlüklere sahip olup, doğayla iç içe, izole bir deneyim arayanları fazlasıyla tatmin edecektir.</p>
+                <p>Bölgeye ulaşım genel olarak rahat olmakla birlikte, özellikle doğa yürüyüşü ve trekking sevenler için çevrede keşfedilmeyi bekleyen birçok gizli patika ve orman içi rota bulunmaktadır. Gün içerisinde bu doğal güzellikleri keşfedebilir, doğa fotoğrafçılığı ile anılarınızı ölümsüzleştirebilir veya sadece ağaçların gölgesinde sessizliğin ve huzurun tadını çıkarabilirsiniz. Kamp alanında ateş yakmaya yalnızca önceden belirlenmiş ve güvenliği sağlanmış belirli noktalarda izin verilmektedir; bu nedenle kendi ateş çanağınızı getirmeniz çevre güvenliği açısından tavsiye edilir. Yaban hayatını korumak ve doğal dengeyi bozmamak adına çöplerinizi yanınızda götürmeniz, yiyeceklerinizi ise gece açıkta bırakmamanız oldukça önemlidir.</p>
+                <p>Deneyimli kampçıların yanı sıra ilk kez kamp yapacak olanlar için de oldukça uygun şartlar sunan bu bölge, mevsimine göre değişkenlik gösteren bir iklime sahip olduğu için yanınıza mevsime uygun, katmanlı kıyafetler ve derecesi iyi bir uyku tulumu almanız gece konforunuzu artıracaktır. Eğer gerçek anlamda deşarj olmak, ruhunuzu dinlendirmek ve dijital dünyadan tamamen kopup toprağa basmak istiyorsanız, ${c[0]} rotası kesinlikle listenizin en üst sıralarında yer almalıdır.</p>`,
+                images: [
+                    baseImg,
+                    "https://images.unsplash.com/photo-1504280502833-2a0e43e0618b?auto=format&fit=crop&w=1200&q=80",
+                    "https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=1200&q=80",
+                    "https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?auto=format&fit=crop&w=1200&q=80"
+                ],
+                needs: ["market", "fuel", "pharmacy", "hospital", "bakery"],
+                mapEmbed: `<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3000!2d35.0!3d39.0!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzjCsDAwJzAwLjAiTiAzNcKwMDAnMDAuMCJF!5e0!3m2!1sen!2str!4v1600000000000!5m2!1sen!2str" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>`
+            };
+        });
+
+        let state = {
+            search: "",
+            region: "all",
+            vibe: [],      
+            facility: [],  
+            sort: "newest",
+            view: "grid",
+            currentView: "home"
+        };
+
+        const blogPosts = [
+            {
+                id: 1,
+                slug: "kamp-yaparken-dikkat-edilmesi-gereken-20-kural",
+                title: "Kamp Yaparken Dikkat Edilmesi Gereken 20 Kural (Güvenli ve Keyifli Kamp Rehberi)",
+                category: "Kamp Rehberi",
+                categoryIcon: "book-open",
+                image: "https://images.unsplash.com/photo-1496080174650-637e3f22fa03?auto=format&fit=crop&w=1200&q=80",
+                excerpt: "Doğayla baş başa kalmak, şehir hayatının stresinden uzaklaşmak ve gerçek anlamda dinlenmek isteyenler için kamp yapmak eşsiz bir deneyimdir.",
+                content: `
+                    <p>Doğayla baş başa kalmak, şehir hayatının stresinden uzaklaşmak ve gerçek anlamda dinlenmek isteyenler için kamp yapmak eşsiz bir deneyimdir. Ancak kamp yaparken dikkat edilmesi gereken kurallar bilinmezse bu deneyim zorlayıcı hale gelebilir. Özellikle ilk kez çadır kampı yapacak olanlar için doğru planlama ve güvenlik önlemleri büyük önem taşır.</p>
+                    <p>Bu rehberde, güvenli kamp yapmak ve doğada konforlu bir deneyim yaşamak için dikkat etmeniz gereken 20 önemli kuralı detaylı şekilde bulabilirsiniz.</p>
+                    
+                    <h2>Kamp Sırasında Dikkat Edilmesi Gerekenler</h2>
+                    <ul>
+                        <li><strong>1. Doğru Kamp Alanını Seçin</strong> Kamp deneyiminin %50’si doğru lokasyon seçimidir. Düz, su baskını riski olmayan ve rüzgârı doğrudan almayan alanlar tercih edilmelidir. Dere yatakları ve eğimli zeminler risklidir.</li>
+                        <li><strong>2. Hava Durumunu Kontrol Etmeden Yola Çıkmayın</strong> Özellikle yayla ve orman kampında hava şartları hızlı değişebilir. Yağmur, sert rüzgar veya ani sıcaklık düşüşleri hazırlıksız yakalanmanıza neden olabilir.</li>
+                        <li><strong>3. Çadırınızı Sağlam ve Doğru Kurun</strong> Çadır kazıklarının tam sabitlenmesi gerekir. Zemin örtüsü (groundsheet) kullanmak hem nemi hem soğuğu engeller. Çadır kapısını rüzgâra karşı konumlandırmamaya dikkat edin.</li>
+                        <li><strong>4. Zemin İzolasyonunu İhmal Etmeyin</strong> Soğuk zemin sandığınızdan daha etkili ısı kaybına neden olur. Mat, şişme yatak veya kalın izolasyon malzemeleri kullanmak gece konforunu artırır.</li>
+                        <li><strong>5. Kamp Ateşini Kontrollü Yakın</strong> Kamp ateşi sadece izin verilen alanlarda yakılmalıdır. Rüzgarlı havalarda ateş yakmak tehlikelidir. Ateşi asla kontrolsüz bırakmayın.</li>
+                        <li><strong>6. Ateşi Tamamen Söndürmeden Alanı Terk Etmeyin</strong> Köz halinde bırakılan ateş bile yangına sebep olabilir. Ayrılmadan önce su dökerek tamamen söndürdüğünüzden emin olun.</li>
+                        <li><strong>7. Yiyecekleri Açıkta Bırakmayın</strong> Açıkta bırakılan yiyecekler böcekleri ve yabani hayvanları çeker. Özellikle orman kampında bu konu daha da önemlidir.</li>
+                        <li><strong>8. Çöplerinizi Toplayın ve Geri Götürün</strong> Doğada kamp yaparken en temel kural: geldiğiniz gibi bırakmak. Çöplerinizi mutlaka toplayın. Mümkünse ayrıştırarak taşıyın.</li>
+                        <li><strong>9. Yeterli İçme Suyu Bulundurun</strong> Her kamp alanında içilebilir su bulunmayabilir. Özellikle ücretsiz kamp alanlarında bu durum sık görülür. Kişi başı günlük minimum su planlaması yapılmalıdır.</li>
+                        <li><strong>10. İlk Yardım Çantası Taşıyın</strong> Küçük kesikler, yanıklar veya böcek ısırıkları kamp sırasında sık yaşanır. Basit bir ilk yardım çantası hayat kurtarabilir.</li>
+                        <li><strong>11. Gece Aydınlatması Planlayın</strong> Kafa lambası veya taşınabilir kamp lambası kullanmak gece hareket ederken güvenlik sağlar. Telefon ışığına güvenmek yeterli değildir.</li>
+                        <li><strong>12. Gürültüden Kaçının</strong> Kamp alanı eğlence mekanı değildir. Yüksek sesli müzik hem diğer kampçılara hem doğaya zarar verir. Sessizlik doğanın bir parçasıdır.</li>
+                        <li><strong>13. Kamp Alanı Kurallarını Öğrenin</strong> Bazı bölgelerde kamp yapmak yasaktır veya belirli saat kısıtlamaları vardır. Gitmeden önce araştırma yapmak önemlidir.</li>
+                        <li><strong>14. Elektrik Ekipmanlarını Güvenli Kullanın</strong> Powerbank, taşınabilir batarya veya kamp jeneratörü kullanıyorsanız güvenli ürünler tercih edin. Su ile temas riskine dikkat edin.</li>
+                        <li><strong>15. Hava Kararmadan Hazırlıkları Tamamlayın</strong> Çadır kurulumunu ve yemek hazırlığını hava aydınlıkken yapmak işleri kolaylaştırır. Gece kurulum zor ve risklidir.</li>
+                        <li><strong>16. Yaban Hayata Müdahale Etmeyin</strong> Hayvanları beslemek ya da yaklaşmak doğal dengeyi bozar. Kamp yaparken doğaya misafir olduğunuzu unutmayın.</li>
+                        <li><strong>17. Değerli Eşyalarınızı Güvende Tutun</strong> Özellikle kalabalık kamp alanlarında değerli eşyaları açıkta bırakmamak gerekir.</li>
+                        <li><strong>18. Telefonunuzu Tamamen Kapatmayın</strong> Acil durumlar için şarjınızın bir kısmını saklayın. Offline harita uygulamaları indirmek faydalı olabilir.</li>
+                        <li><strong>19. Mevsime Uygun Ekipman Kullanın</strong> Yaz kampı ile kış kampı arasında ciddi ekipman farkı vardır. Uyku tulumu derecesi ve çadır tipi mevsime göre seçilmelidir.</li>
+                        <li><strong>20. Doğayı Bulduğunuz Gibi Bırakın</strong> Belki de en önemli kural budur. Kamp yapmak özgürlüktür ama sorumluluk gerektirir. Kamp alanını temiz ve zarar vermeden terk etmek herkesin görevidir.</li>
+                    </ul>
+                    
+                    <h2>Sonuç</h2>
+                    <p>Kamp yaparken dikkat edilmesi gereken kurallar aslında karmaşık değil; bilinçli olmak yeterlidir. Doğru planlama, uygun ekipman ve doğaya saygı sayesinde kamp deneyimi hem güvenli hem de keyifli geçer.</p>
+                    <p>Eğer kamp alanı seçimi konusunda kararsızsanız, lokasyon özelliklerini, WC ve elektrik durumunu önceden kontrol etmek büyük avantaj sağlar. Doğru kamp alanı, iyi bir kamp deneyiminin temelidir.</p>
+                `
+            },
+            {
+                id: 2,
+                slug: "kamp-yaparken-asla-yapmaman-gereken-15-hata",
+                title: "Kamp Yaparken Asla Yapmaman Gereken 15 Hata",
+                category: "Kamp Rehberi",
+                categoryIcon: "book-open",
+                image: "https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?auto=format&fit=crop&w=1200&q=80",
+                excerpt: "Kamp yapmak özgürlük, doğayla temas ve şehirden uzaklaşmak demektir. Ancak bazı hatalar vardır ki kamp deneyimini keyifli olmaktan çıkarabilir.",
+                content: `
+                    <p>Kamp yapmak özgürlük, doğayla temas ve şehirden uzaklaşmak demektir. Ancak bazı hatalar vardır ki kamp deneyimini keyifli olmaktan çıkarabilir. Özellikle ilk kez kamp yapacaklar için yapılan küçük yanlışlar büyük sorunlara dönüşebilir.</p>
+                    
+                    <h2>İşte kamp yaparken asla yapmamanız gereken 15 hata:</h2>
+                    <ul>
+                        <li><strong>1. Plansız Yola Çıkmak</strong> Kamp alanı araştırmadan gitmek en sık yapılan hatadır. Bölge güvenli mi, kamp serbest mi öğrenmek gerekir.</li>
+                        <li><strong>2. Hava Durumunu Kontrol Etmemek</strong> Yağmur ve rüzgar kamp konforunu ciddi şekilde etkiler.</li>
+                        <li><strong>3. Yanlış Kamp Alanı Seçmek</strong> Dere yatağı, eğimli zemin veya açık rüzgar alanları risklidir.</li>
+                        <li><strong>4. Kalitesiz Çadır Kullanmak</strong> Ucuz ve su geçiren çadır gece büyük problem yaratır.</li>
+                        <li><strong>5. Zemin İzolasyonunu Unutmak</strong> Soğuk zemin gece boyunca rahatsız eder.</li>
+                        <li><strong>6. Ateşi Kontrolsüz Bırakmak</strong> Yangın riski oluşturur ve ciddi cezaları vardır.</li>
+                        <li><strong>7. Yiyecekleri Açıkta Bırakmak</strong> Yabani hayvanları kamp alanına çeker.</li>
+                        <li><strong>8. Gereğinden Fazla Eşya Taşımak</strong> Kamp minimalist bir deneyimdir.</li>
+                        <li><strong>9. Su Planlaması Yapmamak</strong> Özellikle ücretsiz kamp alanlarında su bulmak zor olabilir.</li>
+                        <li><strong>10. Gürültü Yapmak</strong> Kamp alanı eğlence mekanı değildir.</li>
+                        <li><strong>11. İlk Yardım Çantası Almamak</strong> Basit yaralanmalar sorun yaratabilir.</li>
+                        <li><strong>12. Telefonu Tamamen Kapatmak</strong> Acil durumlar için iletişim gerekir.</li>
+                        <li><strong>13. Kamp Kurallarını Göz Ardı Etmek</strong> Bazı bölgelerde ateş yakmak yasaktır.</li>
+                        <li><strong>14. Doğaya Zarar Vermek</strong> Bitkilere zarar vermek veya çöp bırakmak kamp kültürüne aykırıdır.</li>
+                        <li><strong>15. Gece Hazırlıksız Kalmak</strong> Aydınlatma ve güvenlik önlemleri alınmalıdır.</li>
+                    </ul>
+                    <p>Kamp yaparken yapılan hatalar genellikle basit ihmallerden kaynaklanır. Doğru planlama ile bu hataların önüne geçilebilir.</p>
+                `
+            },
+            {
+                id: 3,
+                slug: "kampcilarin-en-sik-yaptigi-10-yanlis",
+                title: "Kampçıların En Sık Yaptığı 10 Yanlış",
+                category: "Kamp Rehberi",
+                categoryIcon: "book-open",
+                image: "https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=1200&q=80",
+                excerpt: "Doğada kamp yapmak keyiflidir ancak bazı yanlışlar kamp deneyimini zorlaştırır. İşte kampçıların en sık yaptığı 10 yanlış.",
+                content: `
+                    <p>Doğada kamp yapmak keyiflidir ancak bazı yanlışlar kamp deneyimini zorlaştırır. İşte kampçıların en sık yaptığı 10 yanlış:</p>
+                    
+                    <h2>Sık Yapılan Kamp Hataları</h2>
+                    <ul>
+                        <li><strong>1. Sosyal Medyaya Göre Yer Seçmek</strong> Görsel olarak güzel görünen her yer güvenli değildir.</li>
+                        <li><strong>2. Hava Şartlarını Hafife Almak</strong> Özellikle yayla kampında hava hızlı değişir.</li>
+                        <li><strong>3. Çadırı Denemeden Yola Çıkmak</strong> Evde kurulum testi yapılmalıdır.</li>
+                        <li><strong>4. Yetersiz Uyku Ekipmanı</strong> Kaliteli mat ve uyku tulumu konfor sağlar.</li>
+                        <li><strong>5. Yeterli Su Almamak</strong> Doğada su bulmak her zaman mümkün değildir.</li>
+                        <li><strong>6. Ateşi Güvensiz Yakmak</strong> Rüzgarlı havalarda ateş risklidir.</li>
+                        <li><strong>7. Gürültülü Davranmak</strong> Doğanın sessizliği korunmalıdır.</li>
+                        <li><strong>8. Çöp Bırakmak</strong> En sık yapılan ama en yanlış davranıştır.</li>
+                        <li><strong>9. Kamp Alanını Araştırmamak</strong> WC, elektrik ve güvenlik durumları önceden öğrenilmelidir.</li>
+                        <li><strong>10. Gereksiz Risk Almak</strong> Gece yalnız dolaşmak veya bilinmeyen alanlara gitmek tehlikeli olabilir.</li>
+                    </ul>
+                    <p>Kampçıların yaptığı yanlışlar genellikle deneyimsizlikten kaynaklanır. Ancak doğru bilgi ile bu hatalar kolayca önlenebilir.</p>
+                `
+            },
+            {
+                id: 4,
+                slug: "kamp-yapmak-mi-bungalov-mu",
+                title: "Kamp Yapmak mı Bungalov mu? Artıları ve Eksileri",
+                category: "Kamp Rehberi",
+                categoryIcon: "book-open",
+                image: "https://images.unsplash.com/photo-1587061949409-02df41d5e562?auto=format&fit=crop&w=1200&q=80",
+                excerpt: "Doğa tatili planlayanların en çok sorduğu sorulardan biri: Kamp yapmak mı yoksa bungalov kiralamak mı?",
+                content: `
+                    <p>Doğa tatili planlayanların en çok sorduğu sorulardan biri: Kamp yapmak mı yoksa bungalov kiralamak mı? İki seçenek de doğayla iç içe bir deneyim sunar ancak konfor ve maliyet açısından farklılık gösterir.</p>
+                    
+                    <h2>Kamp Yapmanın Avantajları</h2>
+                    <ul>
+                        <li>Daha ekonomik</li>
+                        <li>Gerçek doğa deneyimi</li>
+                        <li>Özgürlük ve esneklik</li>
+                        <li>İstediğiniz lokasyonda konaklama imkanı</li>
+                    </ul>
+
+                    <h2>Kamp Yapmanın Dezavantajları</h2>
+                    <ul>
+                        <li>Konfor sınırlı</li>
+                        <li>Hava koşullarına bağlı</li>
+                        <li>Ekipman gerektirir</li>
+                    </ul>
+
+                    <h2>Bungalovun Avantajları</h2>
+                    <ul>
+                        <li>Duş ve WC hazır</li>
+                        <li>Yatak ve ısıtma mevcut</li>
+                        <li>Aileler için daha rahat</li>
+                    </ul>
+
+                    <h2>Bungalovun Dezavantajları</h2>
+                    <ul>
+                        <li>Daha pahalı</li>
+                        <li>Rezervasyon zorunlu</li>
+                        <li>Kamp özgürlüğü daha az</li>
+                    </ul>
+                    
+                    <p>Eğer macera ve özgürlük arıyorsanız çadır kampı daha uygundur. Konfor önceliğiniz varsa bungalov tercih edilebilir.</p>
+                `
+            },
+            {
+                id: 5,
+                slug: "turkiyede-gizli-kalmis-kamp-noktalari",
+                title: "Türkiye’de Gizli Kalmış Kamp Noktaları",
+                category: "Rota Önerileri",
+                categoryIcon: "map",
+                image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80",
+                excerpt: "Kalabalık kamp alanlarından uzak, sessiz ve doğal bölgeler her kampçının hayalidir. Türkiye’de hâlâ keşfedilmemiş birçok kamp noktası bulunuyor.",
+                content: `
+                    <p>Kalabalık kamp alanlarından uzak, sessiz ve doğal bölgeler her kampçının hayalidir. Türkiye’de hâlâ keşfedilmemiş birçok kamp noktası bulunuyor.</p>
+                    
+                    <h2>Saklı Cennetler</h2>
+                    <ul>
+                        <li><strong>Sultanpınar Yaylası – İstanbul</strong> Şehre yakın ama sakin bir yayla kampı deneyimi sunar.</li>
+                        <li><strong>Eğriova Göleti – Bolu</strong> Abant kadar bilinmez ancak doğası etkileyicidir.</li>
+                        <li><strong>Sorgun Sahili – Sinop</strong> Denize sıfır ve daha az kalabalık bir kamp alanı.</li>
+                        <li><strong>Kastro Koyu – Kırklareli</strong> İstanbul’a yakın alternatif bir sahil kampı.</li>
+                        <li><strong>Çetibeli Ormanları – Marmaris</strong> Geçiş noktası olarak bilinse de kamp için uygundur.</li>
+                    </ul>
+                    <p>Gizli kamp noktaları genellikle sosyal medyada çok paylaşılmadığı için doğallığını korur. Ancak doğaya saygı göstermek her zamankinden daha önemlidir.</p>
+                `
+            },
+            {
+                id: 6,
+                slug: "kamp-alani-secerken-nelere-dikkat-edilmeli",
+                title: "Kamp Alanı Seçerken Nelere Dikkat Edilmeli?",
+                category: "Kamp Rehberi",
+                categoryIcon: "book-open",
+                image: "https://images.unsplash.com/photo-1455763916899-e8b50eca9967?auto=format&fit=crop&w=1200&q=80",
+                excerpt: "Kamp deneyimi doğru alan seçimi ile başlar. Yanlış lokasyon hem güvenliği hem konforu etkileyebilir.",
+                content: `
+                    <p>Kamp deneyimi doğru alan seçimi ile başlar. Yanlış lokasyon hem güvenliği hem konforu etkileyebilir.</p>
+                    
+                    <h2>Dikkat Edilmesi Gereken Temel Kriterler</h2>
+                    <ul>
+                        <li><strong>1. Zemin Düz ve Güvenli mi?</strong> Çadır kurulumu için düz zemin idealdir.</li>
+                        <li><strong>2. Su Kaynağı Var mı?</strong> İçme suyu imkanı araştırılmalıdır.</li>
+                        <li><strong>3. Güvenlik Durumu</strong> Issız ama güvenli alanlar tercih edilmelidir.</li>
+                        <li><strong>4. WC ve Duş İmkanı</strong> Aile ile kamp yaparken önemlidir.</li>
+                        <li><strong>5. Elektrik Bağlantısı</strong> Karavan kampı için gereklidir.</li>
+                        <li><strong>6. Ulaşım Kolaylığı</strong> Araç yolu ve park alanı kontrol edilmelidir.</li>
+                        <li><strong>7. Kamp Ücretli mi?</strong> Planlama açısından bilinmelidir.</li>
+                        <li><strong>8. Mevsim Şartları</strong> Yaz ve kış kampı farklı hazırlık gerektirir.</li>
+                    </ul>
+                    <p>Doğru kamp alanı seçimi, kamp deneyimini güvenli ve keyifli hale getirir. Ön araştırma yapmak her zaman avantaj sağlar.</p>
+                `
+            }
+        ];
+
+        function updateSEO(title, urlPath, isCampDetail = false) {
+            if (!title) {
+                document.title = "Kampingo - Keşfet, planla, yola çık.";
+            } else if (isCampDetail) {
+                document.title = `Kampingo.com - ${title} Kamp Rehberi`;
+            } else {
+                document.title = `${title} | Kampingo`;
+            }
+            
+            try {
+                if (window.location.protocol !== 'blob:') {
+                    if (urlPath) {
+                        const newUrl = window.location.protocol + "//" + window.location.host + urlPath;
+                        window.history.pushState({ path: newUrl }, '', newUrl);
+                    } else {
+                        const cleanUrl = window.location.protocol + "//" + window.location.host + "/";
+                        window.history.pushState({ path: cleanUrl }, '', cleanUrl);
+                    }
+                }
+            } catch (e) {
+                console.warn("History pushState is disabled in this preview environment for security reasons.", e);
+            }
+        }
+
+        let currentBlogCategory = 'Tümü';
+
+        function renderBlogList(category = 'Tümü') {
+            const grid = document.getElementById('blogGrid');
+            const noResults = document.getElementById('noBlogResults');
+            grid.innerHTML = '';
+            
+            const filteredPosts = category === 'Tümü' 
+                ? blogPosts 
+                : blogPosts.filter(p => p.category === category);
+
+            if (filteredPosts.length === 0) {
+                grid.classList.add('hidden');
+                noResults.classList.remove('hidden');
+                lucide.createIcons();
+                return;
+            } else {
+                grid.classList.remove('hidden');
+                noResults.classList.add('hidden');
+            }
+            
+            filteredPosts.forEach(post => {
+                const card = document.createElement('div');
+                card.className = "bg-brand-surface border border-gray-800 rounded-3xl overflow-hidden card-hover transition-all duration-300 flex flex-col group cursor-pointer";
+                card.onclick = () => showArticle(post.id);
+                
+                card.innerHTML = `
+                    <div class="h-48 md:h-56 relative overflow-hidden shrink-0">
+                        <img src="${post.image}" alt="${post.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                        <div class="absolute inset-0 bg-gradient-to-t from-brand-surface via-transparent to-transparent opacity-90"></div>
+                        <div class="absolute top-4 left-4 bg-brand-primary/90 backdrop-blur px-3 py-1.5 rounded-lg border border-brand-primary/20 shadow-lg text-white text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="${post.categoryIcon}" class="w-3.5 h-3.5"></i> ${post.category}
+                        </div>
+                    </div>
+                    <div class="p-6 md:p-8 flex flex-col flex-grow">
+                        <h3 class="text-xl font-bold text-white mb-3 line-clamp-2 group-hover:text-brand-accent transition-colors">${post.title}</h3>
+                        <p class="text-gray-400 text-sm mb-6 line-clamp-3 leading-relaxed">${post.excerpt}</p>
+                        
+                        <div class="mt-auto flex items-center justify-between pt-4 border-t border-gray-800">
+                            <span class="text-xs text-gray-500 font-medium">5 dk okuma</span>
+                            <button class="text-brand-primary font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all">
+                                Devamını Oku <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        window.filterBlog = function(category) {
+            currentBlogCategory = category;
+            
+            document.querySelectorAll('.blog-cat-btn').forEach(btn => {
+                if(btn.dataset.cat === category) {
+                    btn.className = "blog-cat-btn active bg-brand-primary text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center gap-2 border border-brand-primary";
+                } else {
+                    btn.className = "blog-cat-btn bg-brand-surface hover:bg-brand-primary/20 text-gray-300 hover:text-brand-primary px-4 py-2.5 rounded-xl font-bold text-sm transition-all border border-gray-700 hover:border-brand-primary/50 flex items-center gap-2";
+                }
+            });
+            
+            renderBlogList(category);
+        };
+
+        const checklistCategories = [
+            {
+                title: "1. 🏕️ Barınma ve Uyku İçin Gerekli Kamp Ekipmanları",
+                desc: "Konforlu bir kamp deneyiminin temelinde doğru barınma ekipmanları yer alır. Kamp alanında rahat bir uyku için aşağıdaki malzemeleri mutlaka kontrol edin:",
+                items: ["Çadır", "Çadır kazıkları", "Zemin örtüsü (groundsheet)", "Uyku tulumu", "Mat veya şişme mat", "Kamp yastığı", "Mevsime uygun battaniye"],
+                tip: "👉 Özellikle soğuk havalarda kamp yapacaksanız uyku tulumu derecesini hava şartlarına göre seçmeniz önemlidir."
+            },
+            {
+                title: "2. 🔥 Kamp Mutfak Ekipmanları ve Yemek Malzemeleri",
+                desc: "Doğada yemek hazırlamak kampın en keyifli anlarından biridir. Ancak doğru ekipman olmadan zorlayıcı olabilir. İşte kamp mutfak malzemeleri listesi:",
+                items: ["Kamp ocağı", "Tüp veya yakıt", "Çakmak ya da kibrit", "Tencere – tava seti", "Termos", "Su bidonu", "Bardak, tabak ve çatal-bıçak seti", "Bulaşık süngeri ve küçük deterjan", "Çöp poşeti"],
+                tip: "👉 Kamp alanını temiz bırakmak doğaya saygının en önemli kuralıdır."
+            },
+            {
+                title: "3. 👕 Kampa Giderken Alınacak Kıyafet ve Kişisel Eşyalar",
+                desc: "Kamp süresine ve mevsime göre kıyafet seçimi büyük önem taşır. İşte kamp çantasında olması gereken temel giyim ürünleri:",
+                items: ["Yedek kıyafet", "İç çamaşırı", "Yağmurluk", "Polar veya mont", "Terlik", "Spor ayakkabı", "Şapka", "Güneş gözlüğü", "Mayo (göl veya deniz kampı için)"],
+                tip: "👉 Katmanlı giyim sistemi özellikle serin akşamlar için idealdir."
+            },
+            {
+                title: "4. 🧼 Kişisel Bakım ve Hijyen Malzemeleri",
+                desc: "Doğada hijyen konfor kadar önemlidir. İşte temel bakım ürünleri:",
+                items: ["Diş fırçası ve macun", "Islak mendil", "Tuvalet kağıdı", "Havlu", "Güneş kremi", "Sivrisinek kovucu", "Sabun veya duş jeli", "Deodorant"],
+                tip: "👉 Kamp alanında duş imkanı olmayabilir; pratik temizlik ürünleri hayat kurtarır."
+            },
+            {
+                title: "5. 🔦 Elektronik ve Aydınlatma Ürünleri",
+                desc: "Gece kampında doğru aydınlatma güvenlik açısından kritik öneme sahiptir:",
+                items: ["El feneri", "Kafa lambası", "Powerbank", "Telefon şarj kablosu", "Uzatma kablosu (elektrikli kamp alanları için)"],
+                tip: "👉 Uzun süreli kamplarda yedek powerbank bulundurmanız önerilir."
+            },
+            {
+                title: "6. 🩹 Güvenlik ve Acil Durum Kamp Malzemeleri",
+                desc: "Her kamp çantasında mutlaka bulunması gereken güvenlik ekipmanları:",
+                items: ["İlk yardım çantası", "Ağrı kesici", "Bandaj", "Çakı", "Düdük", "Küçük ip veya halat"],
+                tip: "👉 Doğada hazırlıklı olmak olası riskleri minimuma indirir."
+            },
+            {
+                title: "7. 🎣 Kamp Keyfini Artıran Ekstra Ekipmanlar",
+                desc: "Kamp sadece konaklama değil, aynı zamanda deneyimdir. İşte kampı daha keyifli hale getiren ürünler:",
+                items: ["Kamp sandalyesi", "Kamp masası", "Hamak", "Kitap", "Oyun kartları", "Bluetooth hoparlör", "Balık oltası"],
+                tip: ""
+            }
+        ];
+
+        let savedChecklist = JSON.parse(localStorage.getItem('kampingo_checklist')) || {};
+        let totalItemsCount = 0;
+
+        function renderChecklist() {
+            const container = document.getElementById('checklistRenderArea');
+            container.innerHTML = '';
+            totalItemsCount = 0;
+
+            checklistCategories.forEach((cat, catIndex) => {
+                const card = document.createElement('div');
+                card.className = "bg-brand-surface border border-gray-800 rounded-2xl p-6 md:p-8 shadow-lg";
+                
+                let itemsHtml = '';
+                cat.items.forEach((item, itemIndex) => {
+                    const id = `chk_${catIndex}_${itemIndex}`;
+                    totalItemsCount++;
+                    const isChecked = savedChecklist[id] ? 'checked' : '';
+                    const labelClass = isChecked ? 'line-through text-gray-500' : 'text-gray-200';
+                    
+                    itemsHtml += `
+                        <label class="cb-container text-sm md:text-base transition-all">
+                            <span id="label_${id}" class="${labelClass}">${item}</span>
+                            <input type="checkbox" id="${id}" onchange="toggleCheckItem('${id}')" ${isChecked}>
+                            <span class="checkmark"></span>
+                        </label>
+                    `;
+                });
+
+                let tipHtml = cat.tip ? `
+                    <div class="mt-6 bg-brand-primary/10 border-l-4 border-brand-primary p-4 rounded-r-xl">
+                        <p class="text-sm text-brand-light font-medium">${cat.tip}</p>
+                    </div>
+                ` : '';
+
+                card.innerHTML = `
+                    <h3 class="text-xl md:text-2xl font-bold text-white mb-3 border-b border-gray-800 pb-3">${cat.title}</h3>
+                    <p class="text-gray-400 text-sm mb-6">${cat.desc}</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
+                        ${itemsHtml}
+                    </div>
+                    ${tipHtml}
+                `;
+                container.appendChild(card);
+            });
+            updateProgress();
+        }
+
+        window.toggleCheckItem = function(id) {
+            const cb = document.getElementById(id);
+            const label = document.getElementById(`label_${id}`);
+            
+            savedChecklist[id] = cb.checked;
+            localStorage.setItem('kampingo_checklist', JSON.stringify(savedChecklist));
+            
+            if (cb.checked) {
+                label.classList.add('line-through', 'text-gray-500');
+                label.classList.remove('text-gray-200');
+            } else {
+                label.classList.remove('line-through', 'text-gray-500');
+                label.classList.add('text-gray-200');
+            }
+            updateProgress();
+        };
+
+        window.updateProgress = function() {
+            const checkedCount = Object.values(savedChecklist).filter(Boolean).length;
+            document.getElementById('checklistProgressText').innerText = `Tamamlananlar: ${checkedCount} / ${totalItemsCount}`;
+            
+            let pct = totalItemsCount === 0 ? 0 : (checkedCount / totalItemsCount) * 100;
+            document.getElementById('checklistProgressBar').style.width = `${pct}%`;
+        };
+
+        window.resetChecklist = function() {
+            savedChecklist = {};
+            localStorage.removeItem('kampingo_checklist');
+            
+            renderChecklist();
+
+            const toast = document.createElement('div');
+            toast.className = "fixed inset-0 z-[100] flex items-center justify-center pointer-events-none";
+            toast.innerHTML = `
+                <div class="bg-brand-primary text-white px-6 py-3 rounded-xl font-bold shadow-2xl animate-fade-in flex items-center justify-center gap-2 text-base w-max max-w-[90vw] pointer-events-auto">
+                    <i data-lucide="check-circle" class="w-5 h-5"></i> Seçimler başarıyla sıfırlandı!
+                </div>
+            `;
+            document.body.appendChild(toast);
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                if(document.body.contains(toast)) document.body.removeChild(toast);
+            }, 2500);
+        };
+
+        let cachedFooterLogo = "https://api.allorigins.win/raw?url=https%3A%2F%2Fkampingo.com%2Fimages%2Fassets%2Fpdf-footer-logo.webp";
+
+        async function preloadLogosForPDF() {
+            try {
+                const fRes = await fetch(cachedFooterLogo);
+                const fBlob = await fRes.blob();
+                const fReader = new FileReader();
+                fReader.onloadend = () => { cachedFooterLogo = fReader.result; document.getElementById('pdfFooterLogo').src = cachedFooterLogo; };
+                fReader.readAsDataURL(fBlob);
+            } catch(e) { console.warn("Logolar önbelleğe alınamadı, normal yükleme devam edecek."); }
+        }
+
+        window.downloadPDF = function() {
+            const toast = document.createElement('div');
+            toast.className = "fixed inset-0 z-[100] flex items-center justify-center pointer-events-none";
+            toast.innerHTML = `
+                <div class="bg-brand-primary text-white px-6 py-3 rounded-xl font-bold shadow-2xl animate-fade-in flex items-center justify-center gap-2 text-base w-max max-w-[90vw] pointer-events-auto">
+                    <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Kamp Malzeme Listesi PDF olarak hazırlanıyor... Lütfen bekleyin.
+                </div>
+            `;
+            document.body.appendChild(toast);
+            lucide.createIcons();
+
+            const element = document.getElementById('pdfContentArea');
+            const header = document.getElementById('pdfHeader');
+            const footer = document.getElementById('pdfFooter');
+
+            const originalBorder = element.style.border;
+            const originalShadow = element.style.boxShadow;
+            element.style.border = 'none';
+            element.style.boxShadow = 'none';
+
+            if (header) header.classList.remove('hidden');
+            if (footer) footer.classList.remove('hidden');
+
+            element.classList.add('pdf-light-theme');
+
+            const originalScrollY = window.scrollY;
+            window.scrollTo(0, 0);
+
+            setTimeout(() => {
+                const w = element.offsetWidth;
+                const h = element.scrollHeight;
+
+                const opt = {
+                    margin:       0,
+                    filename:     'Kampingo-Malzeme-Listesi.pdf',
+                    image:        { type: 'jpeg', quality: 0.98 }, 
+                    html2canvas:  { 
+                        scale: 2, 
+                        useCORS: true, 
+                        logging: false, 
+                        backgroundColor: '#ffffff',
+                        scrollY: 0,
+                    },
+                    jsPDF: { 
+                        unit: 'px', 
+                        format: [w + 2, h + 2], 
+                        orientation: 'portrait',
+                        compress: true 
+                    }
+                };
+
+                html2pdf().set(opt).from(element).save().then(() => {
+                    if (header) header.classList.add('hidden');
+                    if (footer) footer.classList.add('hidden');
+                    element.classList.remove('pdf-light-theme');
+                    element.style.border = originalBorder;
+                    element.style.boxShadow = originalShadow;
+                    window.scrollTo(0, originalScrollY);
+
+                    if(document.body.contains(toast)) document.body.removeChild(toast);
+                    
+                    const successToast = document.createElement('div');
+                    successToast.className = "fixed inset-0 z-[100] flex items-center justify-center pointer-events-none";
+                    successToast.innerHTML = `
+                        <div class="bg-brand-primary text-white px-6 py-3 rounded-xl font-bold shadow-2xl animate-fade-in flex items-center justify-center gap-2 text-base w-max max-w-[90vw] pointer-events-auto">
+                            <i data-lucide="check-circle" class="w-5 h-5"></i> PDF Başarıyla İndirildi!
+                        </div>
+                    `;
+                    document.body.appendChild(successToast);
+                    lucide.createIcons();
+                    setTimeout(() => {
+                        if(document.body.contains(successToast)) document.body.removeChild(successToast);
+                    }, 2500);
+                }).catch(err => {
+                    console.error("PDF generation error:", err);
+                    if (header) header.classList.add('hidden');
+                    if (footer) footer.classList.add('hidden');
+                    element.classList.remove('pdf-light-theme');
+                    element.style.border = originalBorder;
+                    element.style.boxShadow = originalShadow;
+                    window.scrollTo(0, originalScrollY);
+                    
+                    if(document.body.contains(toast)) document.body.removeChild(toast);
+                    alert("PDF oluşturulurken bir hata oluştu.");
+                });
+            }, 10);
+        };
+
+        window.toggleMobileMenu = function() {
+            const menu = document.getElementById('mobileMenu');
+            const icon = document.getElementById('mobileMenuIcon');
+            const text = document.getElementById('mobileMenuText');
+            
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                menu.classList.add('flex');
+                icon.setAttribute('data-lucide', 'x');
+                if(text) text.innerText = 'KAPAT';
+            } else {
+                menu.classList.add('hidden');
+                menu.classList.remove('flex');
+                icon.setAttribute('data-lucide', 'menu');
+                if(text) text.innerText = 'MENÜ';
+            }
+            lucide.createIcons();
+        };
+
+        window.closeMobileMenu = function() {
+            const menu = document.getElementById('mobileMenu');
+            const icon = document.getElementById('mobileMenuIcon');
+            const text = document.getElementById('mobileMenuText');
+            
+            if (menu && !menu.classList.contains('hidden')) {
+                menu.classList.add('hidden');
+                menu.classList.remove('flex');
+                icon.setAttribute('data-lucide', 'menu');
+                if(text) text.innerText = 'MENÜ';
+                lucide.createIcons();
+            }
+        };
+
+        // MENU YÖNLENDİRMELERİ
+        window.showHome = function() {
+            closeMobileMenu();
+            state.currentView = 'home';
+            updateSEO("", ""); 
+            
+            // Reklam alanlarını göster
+            document.getElementById('globalHeaderAd').style.display = 'flex';
+            document.getElementById('globalFooterAd').style.display = 'flex';
+
+            document.getElementById('contactSection').classList.add('hidden');
+            document.getElementById('bungalowSection').classList.add('hidden');
+            document.getElementById('marketSection').classList.add('hidden'); 
+            document.getElementById('checklistSection').classList.add('hidden');
+            document.getElementById('blogSection').classList.add('hidden');
+            document.getElementById('articleSection').classList.add('hidden');
+            document.getElementById('campDetailSection').classList.add('hidden');
+            
+            document.getElementById('resultsSection').classList.remove('hidden');
+            document.getElementById('campGrid').classList.remove('hidden');
+            document.getElementById('heroSection').classList.remove('hidden');
+            document.getElementById('filtersSection').classList.remove('hidden');
+            
+            filterData();
+            window.scrollTo({top: 0, behavior: 'smooth'});
+            lucide.createIcons();
+        };
+
+        window.showBlog = function() {
+            closeMobileMenu();
+            state.currentView = 'blog';
+            updateSEO("Blog", "/blog");
+            
+            // Reklam alanlarını göster
+            document.getElementById('globalHeaderAd').style.display = 'flex';
+            document.getElementById('globalFooterAd').style.display = 'flex';
+
+            document.getElementById('heroSection').classList.add('hidden');
+            document.getElementById('filtersSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('campGrid').classList.add('hidden');
+            document.getElementById('loadMoreContainer').classList.add('hidden');
+            document.getElementById('noResults').classList.add('hidden');
+            document.getElementById('contactSection').classList.add('hidden');
+            document.getElementById('bungalowSection').classList.add('hidden');
+            document.getElementById('checklistSection').classList.add('hidden');
+            document.getElementById('articleSection').classList.add('hidden');
+            document.getElementById('marketSection').classList.add('hidden');
+            document.getElementById('campDetailSection').classList.add('hidden');
+            
+            document.getElementById('blogSection').classList.remove('hidden');
+            
+            filterBlog('Tümü');
+            window.scrollTo({top: 0, behavior: 'smooth'});
+            lucide.createIcons();
+        };
+
+        window.showArticle = function(id, pushState = true) {
+            const post = blogPosts.find(p => p.id === id);
+            if(!post) return;
+            
+            // Reklam alanlarını göster
+            document.getElementById('globalHeaderAd').style.display = 'flex';
+            document.getElementById('globalFooterAd').style.display = 'flex';
+
+            if(pushState) {
+                updateSEO(post.title, "/blog/" + post.slug);
+            }
+            
+            document.getElementById('articleTitle').innerText = post.title;
+            document.getElementById('articleImage').src = post.image;
+            document.getElementById('articleContent').innerHTML = post.content;
+            
+            document.getElementById('blogSection').classList.add('hidden');
+            document.getElementById('articleSection').classList.remove('hidden');
+            
+            window.scrollTo({top: 0, behavior: 'smooth'});
+            lucide.createIcons();
+        };
+
+        window.copyArticleLink = function() {
+            const url = window.location.href;
+            const textArea = document.createElement("textarea");
+            textArea.value = url;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                const toast = document.createElement('div');
+                toast.className = "fixed inset-0 z-[100] flex items-center justify-center pointer-events-none";
+                toast.innerHTML = `
+                    <div class="bg-brand-primary text-white px-6 py-3 rounded-xl font-bold shadow-2xl animate-fade-in flex items-center justify-center gap-2 text-base w-max max-w-[90vw] pointer-events-auto">
+                        <i data-lucide="link" class="w-5 h-5"></i> Bağlantı Kopyalandı!
+                    </div>
+                `;
+                document.body.appendChild(toast);
+                lucide.createIcons();
+                setTimeout(() => {
+                    if(document.body.contains(toast)) document.body.removeChild(toast);
+                }, 2500);
+            } catch (err) {
+                console.error(err);
+            }
+            document.body.removeChild(textArea);
+        };
+
+        window.copyDetailLink = function() {
+            window.copyArticleLink(); 
+        };
+
+        window.shareOnWhatsApp = function() {
+            const url = encodeURIComponent(window.location.href);
+            const title = encodeURIComponent(document.title);
+            window.open(`https://api.whatsapp.com/send?text=${title} - ${url}`, '_blank');
+        };
+
+        window.shareOnTelegram = function() {
+            const url = encodeURIComponent(window.location.href);
+            const title = encodeURIComponent(document.title);
+            window.open(`https://t.me/share/url?url=${url}&text=${title}`, '_blank');
+        };
+
+        window.shareOnTwitter = function() {
+            const url = encodeURIComponent(window.location.href);
+            const title = encodeURIComponent(document.title);
+            window.open(`https://twitter.com/intent/tweet?text=${title}&url=${url}`, '_blank');
+        };
+
+        window.showChecklist = function() {
+            closeMobileMenu();
+            state.currentView = 'checklist';
+            updateSEO("Malzeme Listesi", "/malzeme-listesi");
+            
+            // Reklam alanlarını GİZLE (Kullanıcı Dostu Sayfa)
+            document.getElementById('globalHeaderAd').style.display = 'none';
+            document.getElementById('globalFooterAd').style.display = 'none';
+
+            document.getElementById('heroSection').classList.add('hidden');
+            document.getElementById('contactSection').classList.add('hidden');
+            document.getElementById('bungalowSection').classList.add('hidden');
+            document.getElementById('marketSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('campGrid').classList.add('hidden');
+            document.getElementById('filtersSection').classList.add('hidden');
+            document.getElementById('loadMoreContainer').classList.add('hidden');
+            document.getElementById('noResults').classList.add('hidden');
+            document.getElementById('blogSection').classList.add('hidden');
+            document.getElementById('articleSection').classList.add('hidden');
+            document.getElementById('campDetailSection').classList.add('hidden');
+            
+            document.getElementById('checklistSection').classList.remove('hidden');
+            
+            window.scrollTo({top: 0, behavior: 'smooth'});
+            lucide.createIcons();
+            renderChecklist();
+        };
+
+        window.showContact = function() {
+            closeMobileMenu();
+            state.currentView = 'contact';
+            updateSEO("İletişim", "/iletisim");
+            
+            // Reklam alanlarını GİZLE (Kullanıcı Dostu Sayfa)
+            document.getElementById('globalHeaderAd').style.display = 'none';
+            document.getElementById('globalFooterAd').style.display = 'none';
+
+            document.getElementById('heroSection').classList.add('hidden');
+            document.getElementById('filtersSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('campGrid').classList.add('hidden');
+            document.getElementById('loadMoreContainer').classList.add('hidden');
+            document.getElementById('noResults').classList.add('hidden');
+            document.getElementById('bungalowSection').classList.add('hidden');
+            document.getElementById('marketSection').classList.add('hidden');
+            document.getElementById('checklistSection').classList.add('hidden');
+            document.getElementById('blogSection').classList.add('hidden');
+            document.getElementById('articleSection').classList.add('hidden');
+            document.getElementById('campDetailSection').classList.add('hidden');
+            
+            document.getElementById('contactSection').classList.remove('hidden');
+            window.scrollTo({top: 0, behavior: 'smooth'});
+            lucide.createIcons();
+        };
+
+        window.showBungalows = function() {
+            closeMobileMenu();
+            state.currentView = 'bungalows';
+            updateSEO("Bungalov Evler", "/bungalov");
+            
+            // Reklam alanlarını göster
+            document.getElementById('globalHeaderAd').style.display = 'flex';
+            document.getElementById('globalFooterAd').style.display = 'flex';
+
+            document.getElementById('heroSection').classList.add('hidden');
+            document.getElementById('filtersSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('campGrid').classList.add('hidden');
+            document.getElementById('loadMoreContainer').classList.add('hidden');
+            document.getElementById('noResults').classList.add('hidden');
+            document.getElementById('contactSection').classList.add('hidden');
+            document.getElementById('marketSection').classList.add('hidden');
+            document.getElementById('checklistSection').classList.add('hidden');
+            document.getElementById('blogSection').classList.add('hidden');
+            document.getElementById('articleSection').classList.add('hidden');
+            document.getElementById('campDetailSection').classList.add('hidden');
+            
+            document.getElementById('bungalowSection').classList.remove('hidden');
+            renderPremiumBungalows();
+            window.scrollTo({top: 0, behavior: 'smooth'});
+            lucide.createIcons();
+        };
+
+        window.showMarket = function() {
+            closeMobileMenu();
+            state.currentView = 'market';
+            updateSEO("Kamp Market", "/kamp-market");
+            
+            // Reklam alanlarını göster
+            document.getElementById('globalHeaderAd').style.display = 'flex';
+            document.getElementById('globalFooterAd').style.display = 'flex';
+
+            document.getElementById('heroSection').classList.add('hidden');
+            document.getElementById('filtersSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('campGrid').classList.add('hidden');
+            document.getElementById('loadMoreContainer').classList.add('hidden');
+            document.getElementById('noResults').classList.add('hidden');
+            document.getElementById('contactSection').classList.add('hidden');
+            document.getElementById('bungalowSection').classList.add('hidden');
+            document.getElementById('checklistSection').classList.add('hidden');
+            document.getElementById('blogSection').classList.add('hidden');
+            document.getElementById('articleSection').classList.add('hidden');
+            document.getElementById('campDetailSection').classList.add('hidden');
+            
+            document.getElementById('marketSection').classList.remove('hidden');
+            renderMarketProducts();
+            window.scrollTo({top: 0, behavior: 'smooth'});
+            lucide.createIcons();
+        };
+
+        window.showCampDetail = function(id) {
+            const camp = camps.find(c => c.id === id);
+            if (!camp) return;
+
+            // Reklam alanlarını göster
+            document.getElementById('globalHeaderAd').style.display = 'flex';
+            document.getElementById('globalFooterAd').style.display = 'flex';
+
+            let seoUrl = "/kamp-alanlari/" + camp.title.toLowerCase()
+                .replace(/ğ/g, 'g')
+                .replace(/ü/g, 'u')
+                .replace(/ş/g, 's')
+                .replace(/ı/g, 'i')
+                .replace(/ö/g, 'o')
+                .replace(/ç/g, 'c')
+                .replace(/[^a-z0-9]/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '');
+            updateSEO(camp.title, seoUrl, true);
+            state.currentView = 'detail';
+
+            ['heroSection', 'filtersSection', 'resultsSection', 'campGrid', 'loadMoreContainer', 'noResults', 'blogSection', 'articleSection', 'bungalowSection', 'marketSection', 'checklistSection', 'contactSection'].forEach(sec => {
+                document.getElementById(sec)?.classList.add('hidden');
+            });
+
+            document.getElementById('detailTitle').innerText = camp.title;
+            document.getElementById('detailShortDesc').innerText = camp.shortDesc;
+            
+            document.getElementById('detailCity').innerHTML = `<i data-lucide="map-pin" class="w-4 h-4"></i> ${camp.city}`;
+
+            document.getElementById('detailRating').innerHTML = `<i data-lucide="star" class="w-3.5 h-3.5 fill-current text-black"></i> ${camp.rating}`;
+
+            currentDetailImages = camp.images;
+            currentImageIndex = 0;
+            document.getElementById('detailMainImage').src = currentDetailImages[0];
+            renderThumbnails();
+
+            document.getElementById('detailLongDesc').innerHTML = camp.longDesc;
+
+            document.getElementById('detailRegionSidebar').innerHTML = `
+                <div class="flex items-center gap-2 sm:gap-2.5 bg-brand-dark/50 p-2 sm:p-2.5 rounded-xl border border-gray-800/50 hover:bg-brand-primary/10 transition-colors">
+                    <div class="bg-brand-primary/20 text-brand-primary p-1.5 rounded-lg shrink-0">
+                        <i data-lucide="map" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+                    </div>
+                    <span class="text-gray-200 text-xs sm:text-[13px] font-semibold">${camp.region}</span>
+                </div>
+            `;
+            
+            document.getElementById('detailVibesSidebar').innerHTML = camp.vibe.map(v => {
+                let icon = v.includes("Orman") ? "trees" : v.includes("Deniz") ? "waves" : v.includes("Göl") ? "droplets" : "mountain";
+                return `
+                    <div class="flex-1 min-w-[100px] sm:min-w-[120px] flex items-center gap-2 sm:gap-2.5 bg-brand-dark/50 p-2 sm:p-2.5 rounded-xl border border-gray-800/50 hover:bg-brand-primary/10 transition-colors">
+                        <div class="bg-brand-primary/20 text-brand-primary p-1.5 rounded-lg shrink-0">
+                            <i data-lucide="${icon}" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+                        </div>
+                        <span class="text-gray-200 text-xs sm:text-[13px] font-semibold whitespace-nowrap">${v}</span>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('detailFacilities').innerHTML = camp.facilities.map(f => {
+                const meta = facilityIcons[f] || { icon: 'star', label: f };
+                return `
+                    <div class="flex items-center gap-2 sm:gap-2.5 bg-brand-dark/50 p-2 sm:p-2.5 rounded-xl border border-gray-800/50 hover:bg-brand-primary/10 transition-colors">
+                        <div class="bg-brand-primary/20 text-brand-primary p-1.5 rounded-lg shrink-0">
+                            <i data-lucide="${meta.icon}" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+                        </div>
+                        <span class="text-gray-200 text-xs sm:text-[13px] font-semibold truncate" title="${meta.label}">${meta.label}</span>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('detailNeeds').innerHTML = camp.needs.map(n => {
+                const meta = needsIcons[n] || { icon: 'map-pin', label: n };
+                return `
+                    <div class="flex items-center gap-2 sm:gap-2.5 bg-brand-dark/50 p-2 sm:p-2.5 rounded-xl border border-gray-800/50 hover:bg-[#d18c10]/10 transition-colors">
+                        <div class="bg-[#d18c10]/20 text-[#d18c10] p-1.5 rounded-lg shrink-0">
+                            <i data-lucide="${meta.icon}" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+                        </div>
+                        <span class="text-gray-200 text-xs sm:text-[13px] font-semibold truncate" title="${meta.label}">${meta.label}</span>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('detailMap').innerHTML = camp.mapEmbed;
+
+            const topCamps = [...camps].sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating)).slice(0, 6);
+            document.getElementById('popularRoutesSidebar').innerHTML = topCamps.map(c => `
+                <div class="flex items-center gap-4 group cursor-pointer" onclick="showCampDetail(${c.id})">
+                    <div class="w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-gray-700 group-hover:border-brand-primary transition-colors">
+                        <img src="${c.image}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex flex-col">
+                        <h4 class="text-white font-bold text-sm line-clamp-1 group-hover:text-brand-primary transition-colors">${c.title}</h4>
+                        <span class="text-gray-400 text-xs mt-1 flex items-center gap-1"><i data-lucide="map-pin" class="w-3 h-3"></i> ${c.city}</span>
+                        <div class="flex items-center gap-1 mt-1 text-brand-accent">
+                            <i data-lucide="star" class="w-3 h-3 fill-current"></i>
+                            <span class="font-bold text-[11px]">${c.rating}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('campDetailSection').classList.remove('hidden');
+            window.scrollTo({top: 0, behavior: 'smooth'});
+            lucide.createIcons();
+        };
+
+        function renderThumbnails() {
+            const thumbContainer = document.getElementById('detailThumbnails');
+            if(!thumbContainer) return;
+            
+            thumbContainer.innerHTML = currentDetailImages.map((img, idx) => `
+                <div onclick="changeDetailImage(${idx})" class="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer border-2 transition-all duration-300 snap-center ${idx === currentImageIndex ? 'border-brand-primary opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}">
+                    <img src="${img}" class="w-full h-full object-cover">
+                </div>
+            `).join('');
+        }
+
+        window.changeDetailImage = function(index) {
+            currentImageIndex = index;
+            const mainImg = document.getElementById('detailMainImage');
+            if(!mainImg) return;
+            
+            mainImg.style.opacity = 0;
+            setTimeout(() => {
+                mainImg.src = currentDetailImages[index];
+                mainImg.style.opacity = 1;
+            }, 150);
+            
+            renderThumbnails();
+            
+            const thumbContainer = document.getElementById('detailThumbnails');
+            const activeThumb = thumbContainer.children[index];
+            if(activeThumb) {
+                activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+        };
+
+        window.slideDetailMain = function(dir) {
+            const sliderEl = document.getElementById('detailSlider');
+            if(sliderEl) {
+                const scrollAmount = sliderEl.clientWidth;
+                sliderEl.scrollBy({ left: dir * scrollAmount, behavior: 'smooth' });
+            } else {
+                let newIndex = currentImageIndex + dir;
+                if (newIndex < 0) newIndex = currentDetailImages.length - 1;
+                if (newIndex >= currentDetailImages.length) newIndex = 0;
+                changeDetailImage(newIndex);
+            }
+        };
+
+        const marketProducts = [
+            {
+                id: 201,
+                title: "Kamp Çadırı 3 Kişilik - Su Geçirmez",
+                seller: "Kamp Dünyası",
+                price: "₺3.450",
+                oldPrice: "₺4.100",
+                image: "https://images.pexels.com/photos/15925116/pexels-photo-15925116.jpeg?auto=compress&cs=tinysrgb&w=800"
+            },
+            {
+                id: 204,
+                title: "Şarjlı Kamp Feneri",
+                seller: "Kamp Dünyası",
+                price: "₺1.200",
+                oldPrice: "₺1.650",
+                image: "https://images.unsplash.com/photo-1561917181-7441b9a74ce7?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+            },
+            {
+                id: 207,
+                title: "65L Kamp Sırt Çantası",
+                seller: "Doğa Sporları",
+                price: "₺4.200",
+                oldPrice: "₺5.500",
+                image: "https://images.pexels.com/photos/14718806/pexels-photo-14718806.jpeg?auto=compress&cs=tinysrgb&w=800"
+            },
+            {
+                id: 208,
+                title: "Su Geçirmez Outdoor Bot",
+                seller: "Trekking Türkiye",
+                price: "₺5.800",
+                oldPrice: "₺7.200",
+                image: "https://images.pexels.com/photos/7225259/pexels-photo-7225259.jpeg?auto=compress&cs=tinysrgb&w=800",
+                objectFit: "object-cover",
+                imagePos: "object-[center_75%]"
+            }
+        ];
+
+        function renderMarketProducts() {
+            const grid = document.getElementById('marketGrid');
+            grid.innerHTML = '';
+            
+            marketProducts.forEach(product => {
+                const card = document.createElement('div');
+                card.className = "bg-brand-surface border border-gray-800 hover:border-brand-primary/50 rounded-2xl overflow-hidden group transition-all duration-300 shadow-lg flex flex-col";
+                
+                card.innerHTML = `
+                    <div class="relative h-48 sm:h-56 overflow-hidden shrink-0">
+                        <img src="${product.image}" alt="${product.title}" class="w-full h-full ${product.objectFit || 'object-cover'} ${product.imagePos || ''} group-hover:scale-105 transition-transform duration-500">
+                        <div class="absolute top-3 left-3 bg-brand-primary text-white text-[10px] font-extrabold uppercase tracking-widest px-2 py-1 rounded-md shadow-lg flex items-center gap-1">
+                            <i data-lucide="star" class="w-3 h-3 fill-current"></i> Sponsorlu
+                        </div>
+                    </div>
+                    <div class="p-5 flex flex-col flex-grow">
+                        <h3 class="text-lg font-bold text-white leading-tight mb-1 line-clamp-2">${product.title}</h3>
+                        <p class="text-xs text-gray-400 mb-2 flex items-center gap-1">
+                            <i data-lucide="store" class="w-3.5 h-3.5"></i> Satıcı: <span class="text-brand-primary">${product.seller}</span>
+                        </p>
+                        
+                        <div class="mt-auto flex items-center justify-between pt-1 border-t border-gray-800">
+                            <div class="flex flex-col gap-0.5">
+                                <span class="text-base sm:text-lg font-semibold text-gray-500 line-through">${product.oldPrice}</span>
+                                <span class="text-xl font-extrabold text-brand-accent leading-none">${product.price}</span>
+                            </div>
+                            <button onclick="showDemoToast()" class="bg-brand-primary hover:bg-emerald-500 border border-brand-primary text-white py-2 px-3 rounded-xl transition-colors shadow-md shadow-brand-primary/20 flex items-center gap-2 text-sm font-bold">
+                                <i data-lucide="shopping-cart" class="w-4 h-4"></i> İncele
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        const premiumBungalows = [
+            {
+                id: 101,
+                title: "Sapanca Vadi",
+                city: "Sakarya",
+                region: "Marmara",
+                price: "₺4.500 / Gece",
+                image: "https://cdn.pixabay.com/photo/2022/03/24/01/13/cabin-7088140_1280.jpg",
+                imagePos: "object-center",
+                features: ["Özel Isıtmalı Havuz", "Jakuzi", "Şömine", "Göl Manzarası", "Serpme Kahvaltı"],
+                description: "Sakarya Sapanca bölgesinde <strong class='text-white'>doğanın huzur veren atmosferi</strong> içinde <strong class='text-white'>konforlu bir konaklama</strong> deneyimi sunmaktadır. Modern ve zarif mimarisiyle tasarlanan tesis, misafirlerine <strong class='text-white'>sakinlik ve kaliteyi</strong> bir arada yaşama fırsatı tanır. Özenle dekore edilmiş konaklama alanlarında <strong class='text-white'>özel banyo, Wi-Fi, klima, televizyon, minibar, kettle, çay-kahve seti ve saç kurutma makinesi</strong> gibi ihtiyaç duyabileceğiniz tüm detaylar düşünülmüştür.<br><br>Doğayla bütünleşen tasarımı sayesinde hem dinlenebilir hem de keyifli vakit geçirebilirsiniz. Sabahları sunulan <strong class='text-white'>kahvaltı hizmeti</strong> ile güne enerjik bir başlangıç yapabilir, gün boyunca tesisin sunduğu ikram ve dinlenme alanlarında keyifli anlar yaşayabilirsiniz. Huzurlu atmosferiyle Sapanca Vadi, şehir hayatının yoğun temposuna <strong class='text-white'>kısa bir ara vermek isteyen misafirleri</strong> için ideal bir kaçış noktasıdır.",
+                whatsapp: "905551234567",
+                instagram: "gumorstudio"
+            },
+            {
+                id: 103,
+                title: "Sapanca Doğa Bungalov",
+                city: "Sakarya",
+                region: "Marmara",
+                price: "₺5.000 / Gece",
+                image: "https://images.pexels.com/photos/18099078/pexels-photo-18099078.jpeg",
+                imagePos: "object-[center_60%]",
+                features: ["Göl Manzarası", "Sonsuzluk Havuzu", "Jakuzi", "Şömine", "Ateş Çukuru", "Klima", "A La Carte Restoran", "7/24 Resepsiyon"],
+                description: "Sapanca Doğa Bungalov, Sapanca’nın <strong class='text-white'>eşsiz doğası içerisinde</strong> huzur ve konforu bir arada sunan <strong class='text-white'>özel bir konaklama deneyimidir</strong>. Şehrin yoğun temposundan uzaklaşıp doğanın sakin ritmine uyum sağlamak isteyen misafirler için tasarlanan bungalovlar, <strong class='text-white'>modern detaylarla donatılmış sıcak ve samimi</strong> bir atmosfere sahiptir.<br><br>Özenle dekore edilmiş konaklama alanlarında <strong class='text-white'>özel banyo, Wi-Fi, klima, televizyon, mini mutfak alanı, kettle, çay-kahve seti ve saç kurutma makinesi</strong> gibi ihtiyaç duyabileceğiniz tüm olanaklar düşünülmüştür. <strong class='text-white'>Geniş verandası ve doğa manzarası</strong> sayesinde gün doğumunu kuş sesleri eşliğinde karşılayabilir, akşamları ise sakinliğin tadını çıkarabilirsiniz.<br><br>Sabahları sunulan <strong class='text-white'>özel kahvaltı</strong> ile güne keyifli bir başlangıç yapabilir, gün içerisinde doğa yürüyüşleri ve çevre gezileriyle tatilinizi daha da zenginleştirebilirsiniz.",
+                whatsapp: "905551234567",
+                instagram: "gumorstudio"
+            }
+        ];
+
+        function renderPremiumBungalows() {
+            const grid = document.getElementById('bungalowGrid');
+            grid.innerHTML = '';
+            
+            premiumBungalows.forEach(b => {
+                const featuresHtml = b.features.map(f => 
+                    `<span class="bg-brand-dark/50 border border-gray-700 text-gray-200 text-xs sm:text-[13px] px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 whitespace-nowrap"><i data-lucide="check" class="w-3.5 h-3.5 text-[#d18c10]"></i> ${f}</span>`
+                ).join('');
+
+                const card = document.createElement('div');
+                card.className = "flex flex-col md:flex-row bg-brand-surface border border-[#d18c10]/20 rounded-2xl overflow-hidden group hover:border-[#d18c10]/50 transition-colors shadow-lg";
+                
+                const clampClass = b.id === 103 ? 'line-clamp-3' : 'line-clamp-4';
+
+                card.innerHTML = `
+                    <div class="md:w-[30%] relative h-60 sm:h-72 md:h-auto max-h-[320px] overflow-hidden shrink-0">
+                        <img src="${b.image}" alt="${b.title}" class="w-full h-full object-cover ${b.imagePos || 'object-center'} group-hover:scale-105 transition-transform duration-500">
+                        <div class="absolute top-3 left-3 bg-[#d18c10] text-brand-dark text-[10px] font-extrabold uppercase tracking-widest px-2 py-1 rounded-lg shadow-lg flex items-center gap-1">
+                            <i data-lucide="star" class="w-3 h-3 fill-current"></i> Sponsorlu
+                        </div>
+                    </div>
+                    <div class="p-5 md:p-6 flex flex-col flex-grow md:w-[70%]">
+                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2 gap-2">
+                            <h3 class="text-2xl md:text-3xl font-extrabold text-white leading-tight">${b.title}</h3>
+                            <span class="text-[#d18c10] font-extrabold whitespace-nowrap bg-[#d18c10]/10 border border-[#d18c10]/20 px-3 py-1 rounded-lg text-base sm:text-lg">${b.price}</span>
+                        </div>
+                        <p class="text-gray-300 text-sm md:text-[15px] flex items-center gap-1.5 mb-4"><i data-lucide="map-pin" class="w-4 h-4 text-brand-primary"></i> ${b.city}, ${b.region}</p>
+                        
+                        <div class="flex flex-wrap gap-1.5 mb-4">
+                            ${featuresHtml}
+                        </div>
+
+                        <div class="relative mb-4">
+                            <div id="desc-${b.id}" class="text-gray-200 text-sm md:text-[15px] leading-relaxed ${clampClass} transition-all duration-300">
+                                ${b.description}
+                            </div>
+                            <div class="w-full flex justify-end mt-1.5">
+                                <button onclick="toggleDescription(${b.id})" id="btn-desc-${b.id}" class="text-[#d18c10] text-xs font-bold hover:text-yellow-400 transition-colors flex items-center gap-1 uppercase tracking-wider">
+                                    Devamını Oku <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-auto flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-800">
+                            <a href="javascript:void(0)" class="flex-1 bg-[#25D366] hover:bg-[#128C7E] border border-[#25D366] hover:border-[#128C7E] text-white font-bold py-2.5 px-4 rounded-xl text-center text-sm transition-all flex items-center justify-center gap-2 group shadow-md cursor-default">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="w-4 h-4 fill-white group-hover:scale-110 transition-transform"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157.1zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7 .9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg> WhatsApp Mesaj
+                            </a>
+                            <a href="javascript:void(0)" class="flex-1 bg-brand-dark hover:bg-gray-800 border border-gray-700 hover:border-brand-primary text-white font-bold py-2.5 px-4 rounded-xl text-center text-sm transition-all flex items-center justify-center gap-2 group shadow-md cursor-default">
+                                <i data-lucide="instagram" class="w-4 h-4 group-hover:scale-110 transition-transform"></i> Instagram İncele
+                            </a>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        window.toggleDescription = function(id) {
+            const descEl = document.getElementById(`desc-${id}`);
+            const btnEl = document.getElementById(`btn-desc-${id}`);
+            const clampVal = id === 103 ? 'line-clamp-3' : 'line-clamp-4';
+            
+            if (descEl.classList.contains(clampVal)) {
+                descEl.classList.remove(clampVal);
+                btnEl.innerHTML = `Daralt <i data-lucide="chevron-up" class="w-3.5 h-3.5"></i>`;
+            } else {
+                descEl.classList.add(clampVal);
+                btnEl.innerHTML = `Devamını Oku <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>`;
+            }
+            lucide.createIcons();
+        };
+
+        function createCampCard(camp) {
+            const card = document.createElement('div');
+            card.className = "group relative bg-brand-surface rounded-3xl overflow-hidden border border-gray-800 card-hover flex flex-col transition-all duration-300 animate-fade-in cursor-pointer h-full";
+            card.onclick = (e) => {
+                if (e.target.closest('button.ignore-card-click')) return;
+                showCampDetail(camp.id);
+            };
+
+            let facilitiesHtml = camp.facilities.map(f => {
+                const meta = facilityIcons[f] || { icon: 'star', label: f };
+                return `<div class="bg-brand-dark p-2 rounded-xl text-gray-400 hover:text-brand-primary hover:bg-brand-primary/10 transition-colors shadow-sm" title="${meta.label}">
+                            <i data-lucide="${meta.icon}" class="w-[18px] h-[18px]"></i>
+                        </div>`;
+            }).join('');
+
+            card.innerHTML = `
+                <div class="relative h-48 overflow-hidden shrink-0">
+                    <img src="${camp.image}" alt="${camp.title}" loading="lazy" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=800&q=80';">
+                    <div class="absolute inset-0 bg-gradient-to-t from-brand-surface via-transparent to-transparent opacity-90"></div>
+                    
+                    <div class="absolute top-4 left-4 flex flex-col gap-2">
+                        <span class="bg-brand-surface/90 backdrop-blur text-brand-primary text-xs font-bold px-3 py-1.5 rounded-lg border border-brand-primary/20 shadow-lg flex items-center gap-1">
+                            <i data-lucide="map-pin" class="w-3.5 h-3.5"></i> ${camp.city}
+                        </span>
+                    </div>
+                </div>
+                <div class="p-5 flex flex-col flex-grow">
+                    <div class="flex justify-between items-start mb-2 gap-2">
+                        <h3 class="text-xl font-bold text-white line-clamp-2">${camp.title}</h3>
+                        <div class="flex items-center gap-1 bg-brand-accent/10 px-2 py-1 rounded text-brand-accent shrink-0">
+                            <i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i>
+                            <span class="font-bold text-sm">${camp.rating}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 text-sm text-gray-400 mb-2">
+                        <i data-lucide="map" class="w-4 h-4"></i> ${camp.region} • ${camp.vibe.join(', ')}
+                    </div>
+                    
+                    <div class="mt-auto flex items-center justify-between gap-3 pt-2">
+                        <div class="flex flex-wrap gap-1.5 flex-1">
+                            ${facilitiesHtml}
+                        </div>
+                        
+                        <button class="shrink-0 py-2.5 px-4 rounded-xl bg-brand-primary hover:bg-emerald-500 text-white font-bold text-[13px] sm:text-sm transition-all shadow-lg hover:shadow-brand-primary/30 flex items-center justify-center gap-1.5 group">
+                            <i data-lucide="search" class="w-4 h-4 group-hover:scale-110 transition-transform"></i> Detaylı İncele
+                        </button>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        let visibleItems = 12;
+
+        window.loadMoreCamps = function() {
+            visibleItems += 12;
+            renderCamps(currentFilteredData);
+        };
+
+        function filterData() {
+            let sourceCamps = camps;
+            let filtered = sourceCamps.filter(camp => {
+                const matchesSearch = camp.title.toLowerCase().includes(state.search.toLowerCase()) || camp.city.toLowerCase().includes(state.search.toLowerCase());
+                const matchesRegion = state.region === "all" || camp.region === state.region;
+                
+                const matchesVibe = state.vibe.length === 0 || state.vibe.some(v => camp.vibe.includes(v));
+                const matchesFacility = state.facility.length === 0 || state.facility.every(f => camp.facilities.includes(f));
+                
+                return matchesSearch && matchesRegion && matchesVibe && matchesFacility;
+            });
+            visibleItems = 12;
+            renderCamps(filtered);
+        }
+
+        function renderCamps(data) {
+            currentFilteredData = data;
+            const grid = document.getElementById('campGrid');
+            const loadMoreContainer = document.getElementById('loadMoreContainer');
+            if(!grid) return;
+            grid.innerHTML = "";
+            document.getElementById('count').innerText = data.length;
+            
+            if (data.length === 0) {
+                document.getElementById('noResults').classList.remove('hidden');
+                loadMoreContainer.classList.add('hidden');
+                return;
+            } else {
+                document.getElementById('noResults').classList.add('hidden');
+            }
+
+            const itemsToShow = data.slice(0, visibleItems);
+            itemsToShow.forEach(camp => {
+                grid.appendChild(createCampCard(camp));
+            });
+
+            if (data.length > visibleItems) {
+                loadMoreContainer.classList.remove('hidden');
+                loadMoreContainer.innerHTML = `
+                    <button onclick="loadMoreCamps()" class="bg-brand-surface hover:bg-brand-dark border border-brand-primary/30 text-white px-8 py-3 rounded-full font-bold transition-all shadow-lg hover:shadow-brand-primary/20 flex items-center gap-2 mx-auto group ignore-card-click">
+                        <i data-lucide="plus" class="w-5 h-5 group-hover:rotate-90 transition-transform"></i> Daha Fazla Yükle
+                    </button>
+                `;
+            } else {
+                loadMoreContainer.classList.add('hidden');
+            }
+            lucide.createIcons();
+        }
+
+        window.toggleDropdown = function(type) {
+            document.querySelectorAll('.dropdown-menu').forEach(m => {
+                if(m.id !== `menu-${type}`) m.classList.add('hidden');
+            });
+            document.getElementById(`menu-${type}`).classList.toggle('hidden');
+        };
+
+        window.renderDropdowns = function() {
+            ['region', 'vibe', 'facility'].forEach(type => {
+                const menu = document.getElementById(`menu-${type}`);
+                if(menu) {
+                    menu.innerHTML = filterOptions[type].map(opt => {
+                        let isSelected = false;
+                        if (type === 'region') {
+                            isSelected = state.region === opt.value;
+                        } else {
+                            if (opt.value === 'all') {
+                                isSelected = state[type].length === 0;
+                            } else {
+                                isSelected = state[type].includes(opt.value);
+                            }
+                        }
+
+                        const activeClass = isSelected ? 'bg-emerald-50 text-emerald-700 font-extrabold' : 'text-gray-700 font-semibold';
+                        const iconColor = isSelected ? 'text-emerald-600' : 'text-gray-500';
+                        const checkmark = isSelected && type !== 'region' ? `<i data-lucide="check" class="w-5 h-5 text-emerald-600 stroke-[3] ml-auto"></i>` : '';
+
+                        return `
+                            <div onclick="event.stopPropagation(); selectFilterOption('${type}', '${opt.value}', '${opt.label}')" data-value="${opt.value}" class="px-5 py-3 hover:bg-emerald-50 cursor-pointer transition-colors flex items-center justify-start gap-3 ${activeClass}">
+                                ${opt.icon ? `<i data-lucide="${opt.icon}" class="w-[18px] h-[18px] ${iconColor}"></i>` : ''}
+                                <span>${opt.label}</span>
+                                ${checkmark}
+                            </div>
+                        `;
+                    }).join('');
+                }
+            });
+            lucide.createIcons();
+        };
+
+        window.selectFilterOption = function(type, value, label) {
+            if (type === 'region') {
+                state.region = value;
+                document.getElementById(`text-region`).innerText = label;
+                document.getElementById(`menu-${type}`).classList.add('hidden');
+            } else {
+                if (value === 'all') {
+                    state[type] = []; 
+                } else {
+                    if (state[type].includes(value)) {
+                        state[type] = state[type].filter(v => v !== value);
+                    } else {
+                        state[type].push(value); 
+                    }
+                }
+
+                let btnText = "Tümü";
+                if (state[type].length === 1) {
+                    const selectedOpt = filterOptions[type].find(o => o.value === state[type][0]);
+                    btnText = selectedOpt ? selectedOpt.label : "Tümü";
+                } else if (state[type].length > 1) {
+                    btnText = `${state[type].length} Seçildi`;
+                }
+                document.getElementById(`text-${type}`).innerText = btnText;
+            }
+            
+            renderDropdowns();
+        };
+
+        window.applyFilters = function() {
+            filterData();
+            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.add('hidden'));
+        };
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.dropdown-wrapper')) {
+                document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.add('hidden'));
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const yaziSlug = urlParams.get('yazi');
+            const rotaId = urlParams.get('rota');
+            const sayfaTuru = urlParams.get('sayfa');
+
+            const path = window.location.pathname;
+
+            if (path.startsWith('/blog/')) {
+                const yaziSlug = path.replace('/blog/', '');
+                const post = blogPosts.find(p => p.slug === yaziSlug);
+                if(post) showArticle(post.id, false);
+            } else if (path === '/blog') {
+                showBlog();
+            } else if (path === '/malzeme-listesi') {
+                showChecklist();
+            } else if (path === '/bungalov') {
+                showBungalows();
+            } else if (path === '/iletisim') {
+                showContact();
+            } else if (path === '/kamp-market') {
+                showMarket();
+            } else if (path.startsWith('/kamp-alanlari/')) {
+                 const urlSlug = path.replace('/kamp-alanlari/', ''); 
+                 const camp = camps.find(c => {
+                    const cSlug = c.title.toLowerCase()
+                        .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+                        .replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+                    return cSlug === urlSlug;
+                 });
+                 if(camp) showCampDetail(camp.id);
+            }
+
+            renderDropdowns();
+
+            const searchInput = document.getElementById('searchInput');
+            if(searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    state.search = e.target.value;
+                    filterData();
+                });
+            }
+        });
+
+        window.resetFilters = function() {
+            state = { ...state, search: "", region: "all", vibe: [], facility: [], sort: "newest" };
+            
+            document.getElementById('text-region').innerText = "Tümü";
+            document.getElementById('text-vibe').innerText = "Tümü";
+            document.getElementById('text-facility').innerText = "Tümü";
+            
+            renderDropdowns();
+            filterData();
+        };
+
+        window.scrollToResults = function() {
+            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+        };
+
+        window.copyEmail = function() {
+            const email = "iletisim@kampingo.com";
+            const textArea = document.createElement("textarea");
+            textArea.value = email;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                const btn = document.getElementById('copyEmailBtn');
+                
+                btn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i> <span>Kopyalandı!</span>`;
+                btn.classList.remove('bg-brand-surface', 'border-gray-600');
+                btn.classList.add('bg-brand-primary', 'border-brand-primary');
+                lucide.createIcons();
+                
+                setTimeout(() => {
+                    btn.innerHTML = `<i data-lucide="copy" class="w-5 h-5 group-hover:scale-110 transition-transform"></i> <span>Adresi Kopyala</span>`;
+                    btn.classList.remove('bg-brand-primary', 'border-brand-primary');
+                    btn.classList.add('bg-brand-surface', 'border-gray-600');
+                    lucide.createIcons();
+                }, 2500);
+            } catch (err) {
+                console.error("Kopyalama başarısız oldu", err);
+            }
+            document.body.removeChild(textArea);
+        };
+
+        window.handleContactSubmit = async function(e) {
+            if(e) e.preventDefault(); 
+            
+            const form = document.getElementById('contactForm');
+            const formStatus = document.getElementById('formStatus');
+            const submitBtn = document.getElementById('submitBtn');
+            const originalBtnContent = submitBtn.innerHTML;
+
+            submitBtn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> <span>Gönderiliyor...</span>`;
+            submitBtn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                const formData = new FormData(form);
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                const data = await response.json();
+
+                if (response.status === 200 && data.success) {
+                    formStatus.classList.remove('hidden');
+                    formStatus.className = "mt-4 text-sm p-3.5 rounded-xl font-medium text-center transition-all bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 block";
+                    formStatus.innerHTML = '<i data-lucide="check-circle" class="inline w-4 h-4 mr-1"></i> Mesajınız başarıyla gönderildi! Cik cik!';
+                    form.reset();
+                } else {
+                    throw new Error(data.message || 'Form gönderilemedi. Lütfen daha sonra tekrar deneyin.');
+                }
+            } catch (error) {
+                formStatus.classList.remove('hidden');
+                formStatus.className = "mt-4 text-sm p-3.5 rounded-xl font-medium text-center transition-all bg-red-500/20 text-red-400 border border-red-500/30 block";
+                formStatus.innerHTML = `<i data-lucide="alert-circle" class="inline w-4 h-4 mr-1"></i> ${error.message}`;
+            } finally {
+                submitBtn.innerHTML = originalBtnContent;
+                submitBtn.disabled = false;
+                lucide.createIcons();
+            }
+            
+            return false;
+        };
+
+        window.showDemoToast = function() {
+            const toast = document.createElement('div');
+            toast.className = "fixed inset-0 z-[100] flex items-center justify-center pointer-events-none";
+            toast.innerHTML = `
+                <div class="bg-brand-dark text-white px-6 py-4 rounded-2xl font-bold shadow-2xl border border-[#d18c10]/30 animate-fade-in flex items-center justify-center gap-3 text-base w-max max-w-[90vw] pointer-events-auto">
+                    <i data-lucide="info" class="w-6 h-6 text-[#d18c10]"></i>
+                    <div class="text-left">
+                        <p class="text-white text-sm">Yapım Aşamasında</p>
+                        <p class="text-[#d18c10] text-xs font-normal mt-0.5">Ürün yönlendirmeleri şu an kapalıdır.</p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                if(document.body.contains(toast)) document.body.removeChild(toast);
+            }, 2500);
+        };
+
+        window.KampingoCamps = camps;
+        window.KampingoState = state;
+        window.KampingoChecklist = savedChecklist;
+        window.KampingoApp = {
+            renderCamps: renderCamps,
+            filterData: filterData,
+            renderChecklist: renderChecklist,
+            renderBlogList: renderBlogList
+        };
+
+        console.log("🏕️ Kampingo Başarıyla Yüklendi!");
+
+        lucide.createIcons();
+        renderChecklist(); 
+        renderCamps(camps);
+
+    </script>
+</body>
+</html>
