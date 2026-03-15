@@ -300,12 +300,12 @@
     <!-- HEADER ALTI REKLAM ALANI (Tüm sayfalarda üstte görünür) -->
     <!-- Üst ve alt boşluklar mobilde daraltıldı (pt-24 pb-4), masaüstünde geniş bırakıldı (md:pt-28 md:pb-8) -->
     <div id="globalHeaderAd" class="w-full max-w-7xl mx-auto px-4 pt-24 pb-4 md:pt-28 md:pb-8 flex flex-col items-center justify-center no-print">
-        <!-- rounded-2xl class'ı kaldırılarak kenarlar düzleştirildi -->
-        <a href="#" onclick="showChecklist(); return false;" class="block w-full max-w-[970px] overflow-hidden shadow-2xl border border-gray-800/50">
+        <!-- Mobilde alan w-[320px] olarak kilitlendi, büyümesi engellendi -->
+        <a href="#" onclick="showChecklist(); return false;" class="block w-[320px] md:w-full max-w-[970px] overflow-hidden shadow-2xl border border-gray-800/50 mx-auto">
             <!-- Masaüstü Görünüm Banner'ı -->
             <img src="http://kampingo.com/images/assets/reklam-alani-970x250px.webp" alt="Kamp Malzeme Listenizi Yaptınız mı?" class="hidden md:block w-full object-cover">
-            <!-- Mobil Görünüm Banner'ı (Görsel png yapıldı ve kalite için object-contain eklendi) -->
-            <img src="https://kampingo.com/images/assets/reklam-alani-320x100px.png" alt="Kamp Malzeme Listenizi Yaptınız mı?" class="block md:hidden w-full h-auto object-contain">
+            <!-- Mobil Görünüm Banner'ı (Görsel sündürülmeden tam 320x100 boyutunda kilitlendi) -->
+            <img src="https://kampingo.com/images/assets/reklam-alani-320x100px.png" alt="Kamp Malzeme Listenizi Yaptınız mı?" class="block md:hidden w-[320px] h-[100px] object-cover">
         </a>
     </div>
 
