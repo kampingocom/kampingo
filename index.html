@@ -300,12 +300,12 @@
     <!-- HEADER ALTI REKLAM ALANI (Tüm sayfalarda üstte görünür) -->
     <!-- Üst ve alt boşluklar mobilde daraltıldı (pt-24 pb-4), masaüstünde geniş bırakıldı (md:pt-28 md:pb-8) -->
     <div id="globalHeaderAd" class="w-full max-w-7xl mx-auto px-4 pt-24 pb-4 md:pt-28 md:pb-8 flex flex-col items-center justify-center no-print">
-        <!-- Mobilde alan w-[320px] olarak kilitlendi, büyümesi engellendi -->
-        <a href="#" onclick="showChecklist(); return false;" class="block w-[320px] md:w-full max-w-[970px] overflow-hidden shadow-2xl border border-gray-800/50 mx-auto">
-            <!-- Masaüstü Görünüm Banner'ı -->
-            <img src="http://kampingo.com/images/assets/reklam-alani-970x250px.webp" alt="Kamp Malzeme Listenizi Yaptınız mı?" class="hidden md:block w-full object-cover">
-            <!-- Mobil Görünüm Banner'ı (Görsel sündürülmeden tam 320x100 boyutunda kilitlendi) -->
-            <img src="https://kampingo.com/images/assets/reklam-alani-320x100px.png" alt="Kamp Malzeme Listenizi Yaptınız mı?" class="block md:hidden w-[320px] h-[100px] object-cover">
+        <!-- Reklam alanı görselin tam ölçüsüne (w-max) kilitlendi, gereksiz esneme durduruldu -->
+        <a href="#" onclick="showChecklist(); return false;" class="block w-max max-w-full overflow-hidden shadow-2xl border border-gray-800/50 mx-auto">
+            <!-- Masaüstü Görünüm Banner'ı (Görsel sündürülmeden tam doğal ölçüsünde, %100 kalitede kilitlendi) -->
+            <img src="https://kampingo.com/images/assets/reklam-alani-970x250px.webp" alt="Kamp Malzeme Listenizi Yaptınız mı?" class="hidden md:block w-[970px] h-auto max-w-full">
+            <!-- Mobil Görünüm Banner'ı (Görsel sündürülmeden tam doğal ölçüsünde, %100 kalitede kilitlendi) -->
+            <img src="https://kampingo.com/images/assets/reklam-alani-320x100px.png" alt="Kamp Malzeme Listenizi Yaptınız mı?" class="block md:hidden w-[320px] h-auto max-w-full">
         </a>
     </div>
 
@@ -788,14 +788,15 @@
                 </div>
             </div>
 
-            <div class="max-w-4xl mx-auto bg-brand-surface border border-brand-primary/40 rounded-2xl p-5 md:p-6 mb-10 shadow-lg sticky top-24 z-40 backdrop-blur-md no-print">
+            <!-- Hazırlık Durumu box'ı mobilde daha kompakt ve ince olacak şekilde güncellendi -->
+            <div class="max-w-4xl mx-auto bg-brand-surface border border-brand-primary/40 rounded-xl md:rounded-2xl p-3 md:p-6 mb-6 md:mb-10 shadow-lg sticky top-24 z-40 backdrop-blur-md no-print">
                 <div class="w-full">
-                    <div class="flex justify-between items-end mb-2">
-                        <span class="text-white font-bold text-lg">Hazırlık Durumu</span>
-                        <span id="checklistProgressText" class="text-brand-accent font-bold">Tamamlananlar: 0 / 0</span>
+                    <div class="flex justify-between items-end mb-1.5 md:mb-2">
+                        <span class="text-white font-bold text-sm md:text-lg">Hazırlık Durumu</span>
+                        <span id="checklistProgressText" class="text-brand-accent font-bold text-xs md:text-base">Tamamlananlar: 0 / 0</span>
                     </div>
-                    <div class="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
-                        <div id="checklistProgressBar" class="bg-gradient-to-r from-brand-primary to-emerald-400 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    <div class="w-full bg-gray-800 rounded-full h-1.5 md:h-3 overflow-hidden">
+                        <div id="checklistProgressBar" class="bg-gradient-to-r from-brand-primary to-emerald-400 h-1.5 md:h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
                     </div>
                 </div>
             </div>
